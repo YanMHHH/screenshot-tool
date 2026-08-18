@@ -1,0 +1,25 @@
+{
+  "name": "jinghe-desktop",
+  "version": "0.1.0",
+  "description": "镜核企业资质核查桌面应用",
+  "main": "main.js",
+  "scripts": {
+    "dev": "electron .",
+    "start": "electron .",
+    "package": "electron-builder --dir"
+  },
+  "dependencies": {
+    "pngjs": "^7.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "electron": "^36.3.2",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.jinghe.desktop",
+    "productName": "镜核",
+    "directories": { "output": "release" },
+    "files": ["main.js", "preload.js", "../app/**/*", "package.json"]
+  }
+}
