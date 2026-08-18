@@ -122,13 +122,19 @@ async function fillAndSubmit(company) {
 }
 
 async function waitForResult(company) {
-  const deadline = Date.now() + 18000;
+  const deadline = Date.now() + 30000;
   while (Date.now() < deadline) {
     await waitUntilRunnable();
     if (await detectManualIntervention()) return { status: 'manual', reason: '检测到验证码或访问拦截' };
     const info = await inspectPage();
-    const hasResult = /查询结果|未找到|没有找到|失信被执行人|严重失信主体/.test(info.text);
-    if (hasResult) return { status: 'ready', outcome: /未找到|没有找到|暂无相关/.test(info.text) ? '无记录' : '成功' };
+    // The page contains the headings "查询结果" and "严重失信主体名单"
+    // before submission, so those headings cannot be used as completion signals.
+    // A completed query must either show the explicit empty-result message or
+    // render the submitted company name in the result area.
+    const emptyResult = /很抱歉[，,]?\s*没有找到您搜索的数据|没有找到您搜索的数据|暂无相关数据/.test(info.text);
+    const resultHasCompany = info.text.includes(company);
+    if (emptyResult) return { status: 'ready', outcome: '无记录' };
+    if (resultHasCompany) return { status: 'ready', outcome: '成功' };
     await wait(800);
   }
   return { status: 'failed', reason: `等待查询结果超时：${company}` };
