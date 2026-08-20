@@ -21,7 +21,7 @@
       </nav>
 
       <section class="view active" id="config-view">
-        <div class="page-heading"><div><h1>任务配置</h1><p>输入项目与公司名单，选择目标网站后开始执行。</p></div><span class="scope-pill">W-001 已适配</span></div>
+        <div class="page-heading"><div><h1>任务配置</h1><p>输入项目与公司名单，选择目标网站后开始执行。</p></div><span class="scope-pill">W-001 至 W-005 已适配</span></div>
         <section class="panel">
           <h2>项目与公司名单</h2>
           <label class="field wide"><span>项目名称 <b>*</b></span><input id="project-name" maxlength="80" placeholder="例如：标前审查-项目 A" /></label>
@@ -33,12 +33,19 @@
 
         <section class="panel"><h2>目标网站</h2>
           <div class="site-grid">
-            <label class="site enabled"><input type="checkbox" checked disabled /><span class="check"></span><span><strong>W-001 信用中国</strong><small>严重失信主体名单、重大税收违法失信主体名单</small></span><em>已适配</em></label>
-            <label class="site"><input type="checkbox" disabled /><span class="check"></span><span><strong>W-002 中国执行信息公开网</strong><small>失信被执行人</small></span><em>待适配</em></label>
-            <label class="site"><input type="checkbox" disabled /><span class="check"></span><span><strong>W-003 中国政府采购网</strong><small>严重违法失信行为记录名单</small></span><em>待适配</em></label>
-            <label class="site"><input type="checkbox" disabled /><span class="check"></span><span><strong>W-004 军队采购网</strong><small>暂停名单、失信名单</small></span><em>待适配</em></label>
-            <label class="site"><input type="checkbox" disabled /><span class="check"></span><span><strong>W-005 全国企业破产重整案件信息网</strong><small>企业破产重整案件信息</small></span><em>待适配</em></label>
+            <label class="site"><input type="checkbox" name="site-code" value="W-001" checked /><span class="check"></span><span><strong>W-001 信用中国</strong><small>严重失信主体名单、重大税收违法失信主体名单</small></span><em>已适配</em></label>
+            <label class="site"><input type="checkbox" name="site-code" value="W-002" /><span class="check"></span><span><strong>W-002 中国执行信息公开网</strong><small>失信被执行人</small></span><em>已适配</em></label>
+            <label class="site"><input type="checkbox" name="site-code" value="W-003" /><span class="check"></span><span><strong>W-003 中国政府采购网</strong><small>政府采购严重违法失信行为记录名单</small></span><em>已适配</em></label>
+            <label class="site"><input type="checkbox" name="site-code" value="W-004" /><span class="check"></span><span><strong>W-004 军队采购网</strong><small>军队采购暂停名单、军队采购失信名单</small></span><em>已适配</em></label>
+            <label class="site"><input type="checkbox" name="site-code" value="W-005" /><span class="check"></span><span><strong>W-005 全国企业破产重整案件信息网</strong><small>企业破产重整案件信息</small></span><em>已适配</em></label>
             <label class="site"><input type="checkbox" disabled /><span class="check"></span><span><strong>W-006 国家企业信用信息公示系统</strong><small>企业信用与违法失信名单</small></span><em>待适配</em></label>
+          </div>
+        </section>
+
+        <section class="panel"><h2>留存方式</h2>
+          <div class="capture-modes" role="radiogroup" aria-label="查询结果留存方式">
+            <label class="capture-mode"><input type="radio" name="capture-mode" value="png" checked /><span><strong>PNG 截图</strong><small>保存网页全图，并附加完整 Windows 任务栏、系统时间和日期</small></span></label>
+            <label class="capture-mode"><input type="radio" name="capture-mode" value="pdf" /><span><strong>网页 PDF</strong><small>将查询结果页按 A4 横向打印为可分页保存的 PDF 文件</small></span></label>
           </div>
         </section>
 
@@ -57,7 +64,7 @@
       <section class="view" id="result-view">
         <div class="page-heading"><div><h1>任务结果</h1><p>执行明细会实时写入 CSV，并在结束后按项目归档。</p></div><span class="task-state" id="result-state">暂无任务结果</span></div>
         <section class="panel result-summary" id="result-summary">尚未生成任务结果。</section>
-        <section class="panel table-panel"><h2>执行明细</h2><div class="table-wrap"><table><thead><tr><th>公司名称</th><th>网站</th><th>查询项</th><th>状态</th><th>失败原因</th><th>截图文件</th></tr></thead><tbody id="result-rows"><tr class="empty"><td colspan="6">暂无执行记录</td></tr></tbody></table></div></section>
+        <section class="panel table-panel"><h2>执行明细</h2><div class="table-wrap"><table><thead><tr><th>公司名称</th><th>网站</th><th>查询项</th><th>异常状态</th><th>留存方式</th><th>失败原因</th><th>留存文件</th></tr></thead><tbody id="result-rows"><tr class="empty"><td colspan="7">暂无执行记录</td></tr></tbody></table></div></section>
         <div class="result-actions"><button class="button outline" id="open-output" disabled>打开输出目录</button><button class="button outline" id="open-report" disabled>打开明细报告</button></div>
       </section>
 

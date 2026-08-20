@@ -12,8 +12,34 @@ const SITE_CATALOG = {
   'W-001': {
     name: '信用中国',
     queries: [
-      { name: '严重失信主体名单', url: 'https://www.creditchina.gov.cn/xinxigongshi/shixinheimingdan/' },
-      { name: '重大税收违法失信主体名单', url: 'https://www.creditchina.gov.cn/zhuanxiangchaxun/zhongdashuishouweifaanjian/' }
+      { name: '严重失信主体名单', url: 'https://www.creditchina.gov.cn/xinxigongshi/shixinheimingdan/', adapter: 'credit-china' },
+      { name: '重大税收违法失信主体名单', url: 'https://www.creditchina.gov.cn/zhuanxiangchaxun/zhongdashuishouweifaanjian/', adapter: 'credit-china' }
+    ]
+  },
+  'W-002': {
+    name: '中国执行信息公开网',
+    allowUntitledPage: true,
+    queries: [
+      { name: '失信被执行人', url: 'https://zxgk.court.gov.cn/shixin/', adapter: 'court-shixin' }
+    ]
+  },
+  'W-003': {
+    name: '中国政府采购网',
+    queries: [
+      { name: '政府采购严重违法失信行为记录名单', url: 'https://www.ccgp.gov.cn/search/cr/', adapter: 'ccgp-cr' }
+    ]
+  },
+  'W-004': {
+    name: '军队采购网',
+    queries: [
+      { name: '军队采购暂停名单', url: 'https://www.plap.mil.cn/freecms-glht/site/juncai/jdjc/index.html?channel=ad1a7596-65eb-48b4-909f-11679731ae94', adapter: 'plap-punish', listCode: 'suspend' },
+      { name: '军队采购失信名单', url: 'https://www.plap.mil.cn/freecms-glht/site/juncai/jdjc/index.html?channel=ad1a7596-65eb-48b4-909f-11679731ae94', adapter: 'plap-punish', listCode: 'breakFaith' }
+    ]
+  },
+  'W-005': {
+    name: '全国企业破产重整案件信息网',
+    queries: [
+      { name: '企业破产重整案件信息', url: 'https://pccz.court.gov.cn/pcajxxw/index/xxwsy', adapter: 'pccz-search' }
     ]
   }
 };
@@ -21,6 +47,21 @@ const CREDIT_CHINA_SELECTORS = {
   search: '.searchBox input', submit: '.infoCheckBtn', captchaPopup: '.vcodepop',
   captchaImage: '#vcodeimg', captchaInput: '#vcode', captchaConfirm: '.vcodepop .confirm',
   captchaRefresh: '.vcodepop .vcodeimgbox span', captchaCancel: '.vcodepop .cancel'
+};
+const COURT_SHIXIN_SELECTORS = {
+  search: '#pName', captchaImage: '#captchaImg', captchaInput: '#yzm', captchaId: '#captchaId',
+  submit: 'button.btn-zxgk', resultBlock: '#result-block', resultBody: '#tbody-result', resultHead: '#result-thead'
+};
+const CCGP_CR_SELECTORS = {
+  frame: 'iframe[src*="/cr/list"]', search: '#orgName', form: '#ggForm', submit: '#searchForm',
+  resultTable: '#tableInfo', resultRows: '#tableInfo tr.trShow'
+};
+const PLAP_PUNISH_SELECTORS = {
+  listCard: '.sonChannelDiv', search: '#handleSearchParam', submit: '#Inquire',
+  resultList: '.noticeShowList', loading: '#loadingMask'
+};
+const PCCZ_SELECTORS = {
+  form: '#qzss', search: '#search', submit: '#qzss_search', resultList: '#gjsslb'
 };
 const STATE_FILE = 'task_state.json';
 const REPORT_FILE = '执行明细报告.csv';
@@ -52,7 +93,18 @@ function getOcr() { if (!ocrPromise) ocrPromise = DdddOcr.create(); return ocrPr
 function safeName(value) { return String(value).replace(/[\\/:*?"<>|]/g, '_').trim(); }
 function itemKey(company, siteCode, query) { return `${company}|${siteCode}|${query}`; }
 function timestamp() { return new Date().toISOString().replace(/[:.]/g, '-'); }
+function printTimestamp() { return new Date().toLocaleString('zh-CN', { hour12: false }); }
 function csvCell(value) { return `"${String(value ?? '').replace(/"/g, '""')}"`; }
+function normalizeCaptureMode(value) { return value === 'pdf' ? 'pdf' : 'png'; }
+function captureModeLabel(value) { return normalizeCaptureMode(value) === 'pdf' ? '网页 PDF' : 'PNG 截图'; }
+function exceptionStatus(executionStatus) {
+  if (executionStatus === '成功') return '异常';
+  if (executionStatus === '无记录') return '无异常';
+  return '查询异常';
+}
+function normalizeSiteCodes(codes) { return [...new Set((codes || []).filter((code) => SITE_CATALOG[code]))]; }
+function queriesForSites(siteCodes) { return normalizeSiteCodes(siteCodes).flatMap((siteCode) => SITE_CATALOG[siteCode].queries.map((query) => ({ ...query, siteCode }))); }
+function taskTotal(state) { return state.companies.length * queriesForSites(state.siteCodes || ['W-001']).length; }
 
 function makeCaptchaVariant(raw, mode) {
   const source = PNG.sync.read(raw);
@@ -138,13 +190,13 @@ async function saveState(folder, state) {
 async function prepareReport(folder) {
   const reportPath = path.join(folder, REPORT_FILE);
   try { await fs.access(reportPath); } catch (_) {
-    await fs.writeFile(reportPath, '\uFEFF序号,公司名称,网站,查询项,状态,失败原因,截图文件名,时间\r\n', 'utf8');
+    await fs.writeFile(reportPath, '\uFEFF序号,公司名称,网站,查询项,异常状态,留存方式,失败原因,留存文件名,时间\r\n', 'utf8');
   }
   return reportPath;
 }
 
 async function appendReport(reportPath, row) {
-  const values = [row.index, row.company, row.site, row.query, row.status, row.reason, row.screenshot, row.time];
+  const values = [row.index, row.company, row.site, row.query, row.exceptionStatus, row.captureMode, row.reason, row.screenshot, row.time];
   await fs.appendFile(reportPath, `${values.map(csvCell).join(',')}\r\n`, 'utf8');
 }
 
@@ -180,15 +232,21 @@ async function nativeCaptchaState(session) {
     const popup = document.querySelector(selectors.captchaPopup);
     const visible = Boolean(popup && getComputedStyle(popup).display !== 'none' && getComputedStyle(popup).visibility !== 'hidden');
     const image = document.querySelector(selectors.captchaImage);
+    const imageStyle = image ? getComputedStyle(image) : null;
+    const imageRect = image?.getBoundingClientRect();
+    const imageVisible = Boolean(imageRect && imageRect.width > 0 && imageRect.height > 0 && imageStyle?.display !== 'none' && imageStyle?.visibility !== 'hidden');
     const input = document.querySelector(selectors.captchaInput);
     const confirm = document.querySelector(selectors.captchaConfirm);
+    const refresh = document.querySelector(selectors.captchaRefresh);
     return {
       visible,
-      imageReady: Boolean(image?.complete && image.naturalWidth > 0 && image.naturalHeight > 0 && (image.currentSrc || image.src)),
+      imagePresent: Boolean(image), imageVisible,
+      imageReady: Boolean(imageVisible && image?.complete && image.naturalWidth > 0 && image.naturalHeight > 0 && (image.currentSrc || image.src)),
       imageComplete: Boolean(image?.complete), imageWidth: image?.naturalWidth || 0, imageHeight: image?.naturalHeight || 0,
       imageSrc: image?.currentSrc || image?.src || '',
       inputReady: Boolean(input && getComputedStyle(input).display !== 'none'),
       confirmReady: Boolean(confirm && getComputedStyle(confirm).display !== 'none'),
+      refreshReady: Boolean(refresh && getComputedStyle(refresh).display !== 'none' && getComputedStyle(refresh).visibility !== 'hidden'),
       error: popup?.querySelector('.errortip')?.innerText?.trim() || '',
       challenge: /安全验证|访问过于频繁|人机验证|请完成验证/.test(document.body?.innerText || '')
     };
@@ -206,7 +264,7 @@ async function waitForCaptcha(session, timeoutMs = 6000) {
   return latest;
 }
 
-async function waitForStableCaptchaImage(session, timeoutMs = 12000) {
+async function waitForStableCaptchaImage(session, timeoutMs = 20000) {
   const deadline = Date.now() + timeoutMs;
   let latest = {};
   while (Date.now() < deadline) {
@@ -231,7 +289,7 @@ async function waitForStableCaptchaImage(session, timeoutMs = 12000) {
   }
   if (latest.imageCaptureError) return { ok: false, reason: `验证码像素截取失败：${latest.imageCaptureError}`, diagnostic: latest };
   if (latest.imageChangedWhileReading) return { ok: false, reason: '验证码图片在连续两帧之间发生变化', diagnostic: latest };
-  return { ok: false, reason: '验证码图片在 12 秒内未完成稳定加载', diagnostic: latest };
+  return { ok: false, reason: `验证码图片在 ${Math.round(timeoutMs / 1000)} 秒内未完成稳定加载`, diagnostic: latest };
 }
 
 async function waitForCaptchaOutcome(session) {
@@ -265,7 +323,29 @@ async function saveCaptchaDiagnostic(folder, company, query, attempt, diagnostic
   }
 }
 
+async function captureCaptchaPopup(session) {
+  try { return await session.screenshotElement(CREDIT_CHINA_SELECTORS.captchaPopup); } catch (_) { return null; }
+}
+
+async function refreshCaptchaInPlace(session) {
+  const result = await session.evaluate((selectors) => {
+    const popup = document.querySelector(selectors.captchaPopup);
+    const refresh = document.querySelector(selectors.captchaRefresh);
+    const visible = popup && getComputedStyle(popup).display !== 'none' && getComputedStyle(popup).visibility !== 'hidden';
+    if (!visible) return { ok: false, reason: '验证码弹窗已关闭' };
+    if (!refresh || getComputedStyle(refresh).display === 'none' || getComputedStyle(refresh).visibility === 'hidden') return { ok: false, reason: '未找到可用的验证码刷新控件' };
+    refresh.click();
+    return { ok: true };
+  }, CREDIT_CHINA_SELECTORS);
+  if (!result.ok) return result;
+  await sleep(900);
+  const state = await waitForCaptcha(session, 8000);
+  return state.visible ? { ok: true, method: 'refresh' } : { ok: false, reason: state.challenge ? '刷新验证码后页面进入安全检查' : '刷新验证码后弹窗已关闭' };
+}
+
 async function requestFreshCaptcha(session, company, query) {
+  const refreshed = await refreshCaptchaInPlace(session);
+  if (refreshed.ok) return refreshed;
   await session.evaluate((selectors) => document.querySelector(selectors.captchaCancel)?.click(), CREDIT_CHINA_SELECTORS);
   await sleep(700);
   await session.navigate(query.url);
@@ -273,7 +353,7 @@ async function requestFreshCaptcha(session, company, query) {
   if (!filled.ok) return { ok: false, reason: filled.reason };
   const state = await waitForCaptcha(session);
   if (!state.visible) return { ok: false, reason: state.challenge ? '重新查询后页面进入安全检查' : '重新查询后未出现验证码弹窗' };
-  return { ok: true };
+  return { ok: true, method: 'navigate' };
 }
 
 async function solveCaptchaIfNeeded(session, company, query, captchaRetry, folder, notify) {
@@ -290,11 +370,13 @@ async function solveCaptchaIfNeeded(session, company, query, captchaRetry, folde
       imageRecovery += 1;
       const isCaptureFailure = Boolean(imageResult.diagnostic.imageCaptureError);
       lastReason = imageResult.reason;
-      await saveCaptchaDiagnostic(folder, company, query, `image-${imageRecovery}`, { phase: isCaptureFailure ? 'image_capture' : 'image_load', reason: lastReason, ...imageResult.diagnostic }, null, notify);
+      const popupImage = await captureCaptchaPopup(session);
+      await saveCaptchaDiagnostic(folder, company, query, `image-${imageRecovery}`, { phase: isCaptureFailure ? 'image_capture' : 'image_load', reason: lastReason, diagnosticImage: popupImage ? 'captcha_popup' : '', ...imageResult.diagnostic }, popupImage, notify);
       if (imageRecovery >= Math.max(3, captchaRetry)) return { ok: false, reason: `${isCaptureFailure ? '验证码像素截取连续失败' : '验证码图片连续未加载'}（${imageRecovery} 次）：${imageResult.reason}` };
-      notify(`${isCaptureFailure ? '验证码像素截取失败' : '验证码图片未就绪'}，关闭弹窗并重新发起查询`);
+      notify(`${isCaptureFailure ? '验证码像素截取失败' : '验证码图片未就绪'}，正在尝试刷新验证码图片`);
       const fresh = await requestFreshCaptcha(session, company, query);
       if (!fresh.ok) return { ok: false, reason: `验证码图片恢复失败：${fresh.reason}` };
+      notify(fresh.method === 'refresh' ? '验证码图片已原地刷新，等待加载' : '验证码刷新控件不可用，已重新发起查询');
       continue;
     }
     imageRecovery = 0;
@@ -368,7 +450,17 @@ async function nativeWaitForResult(session, company) {
   return { status: '失败', reason: `等待查询结果超时：${company}` };
 }
 
-async function runOne(session, company, query, settings, notify, folder) {
+async function saveResultArtifact(session, companyDir, siteName, queryName, captureMode, company, notify) {
+  const isPdf = captureMode === 'pdf';
+  const screenshot = `${safeName(siteName)}_${safeName(queryName)}_${timestamp()}.${isPdf ? 'pdf' : 'png'}`;
+  const capture = isPdf
+    ? await session.printPageToPdf(path.join(companyDir, screenshot), printTimestamp())
+    : await session.captureFullPage(path.join(companyDir, screenshot));
+  notify(`${isPdf ? '网页 PDF' : '截图'}已保存：${path.join(safeName(company), screenshot)}`, 'success');
+  return { screenshot: path.join(safeName(company), screenshot), artifactLabel: isPdf ? '网页 PDF 已保存' : '截图已保存', capture };
+}
+
+async function runCreditChinaOne(session, company, query, settings, captureMode, notify, folder) {
   let lastError = '';
   for (let attempt = 1; attempt <= settings.siteRetry; attempt += 1) {
     await waitUntilRunnable();
@@ -383,13 +475,12 @@ async function runOne(session, company, query, settings, notify, folder) {
       if (outcome.status === '失败') throw new Error(outcome.reason);
       const companyDir = path.join(folder, safeName(company));
       await fs.mkdir(companyDir, { recursive: true });
-      const screenshot = `${safeName(SITE_CATALOG['W-001'].name)}_${safeName(query.name)}_${timestamp()}.png`;
-      const capture = await session.captureFullPage(path.join(companyDir, screenshot));
-      notify(`截图已保存：${path.join(safeName(company), screenshot)}`, 'success');
+      const artifact = await saveResultArtifact(session, companyDir, SITE_CATALOG[query.siteCode].name, query.name, captureMode, company, notify);
       return {
         status: outcome.status,
-        screenshot: path.join(safeName(company), screenshot),
-        reason: capture?.truncated ? `页面高度 ${capture.originalHeight}px，截图已按 20000px 上限截断` : ''
+        screenshot: artifact.screenshot,
+        artifactLabel: artifact.artifactLabel,
+        reason: artifact.capture?.truncated ? `页面高度 ${artifact.capture.originalHeight}px，截图已按 20000px 上限截断` : ''
       };
     } catch (error) {
       if (taskStopped) throw error;
@@ -400,14 +491,507 @@ async function runOne(session, company, query, settings, notify, folder) {
   return { status: '失败', reason: lastError || '查询失败' };
 }
 
+async function courtCaptchaState(session) {
+  return session.evaluate((selectors) => {
+    const image = document.querySelector(selectors.captchaImage);
+    const style = image ? getComputedStyle(image) : null;
+    const rect = image?.getBoundingClientRect();
+    const imageVisible = Boolean(rect && rect.width > 0 && rect.height > 0 && style?.display !== 'none' && style?.visibility !== 'hidden');
+    return {
+      nameReady: Boolean(document.querySelector(selectors.search)),
+      inputReady: Boolean(document.querySelector(selectors.captchaInput)),
+      submitReady: Boolean(document.querySelector(selectors.submit)),
+      imageReady: Boolean(imageVisible && image?.complete && image.naturalWidth > 0 && image.naturalHeight > 0),
+      imageWidth: image?.naturalWidth || 0,
+      imageHeight: image?.naturalHeight || 0,
+      captchaId: document.querySelector(selectors.captchaId)?.value || ''
+    };
+  }, COURT_SHIXIN_SELECTORS);
+}
+
+async function waitForCourtCaptchaImage(session, timeoutMs = 20000) {
+  const deadline = Date.now() + timeoutMs;
+  let latest = {};
+  while (Date.now() < deadline) {
+    const state = await courtCaptchaState(session);
+    latest = { ...state };
+    if (!state.imageReady) {
+      await sleep(400);
+      continue;
+    }
+    try {
+      const first = await session.screenshotElement(COURT_SHIXIN_SELECTORS.captchaImage);
+      await sleep(500);
+      const second = await session.screenshotElement(COURT_SHIXIN_SELECTORS.captchaImage);
+      if (first.equals(second)) return { ok: true, image: second, diagnostic: { ...latest, imageSha256: crypto.createHash('sha256').update(second).digest('hex') } };
+      latest.imageChangedWhileReading = true;
+    } catch (error) {
+      latest.imageCaptureError = error.message;
+    }
+    await sleep(400);
+  }
+  return { ok: false, reason: latest.imageCaptureError ? `验证码像素截取失败：${latest.imageCaptureError}` : '验证码图片在 20 秒内未完成稳定加载', diagnostic: latest };
+}
+
+async function fillCourtCompany(session, company) {
+  return session.evaluate(({ value, selectors }) => {
+    const field = document.querySelector(selectors.search);
+    const code = document.querySelector(selectors.captchaInput);
+    if (!field || !code) return { ok: false, reason: '未找到被执行人名称或验证码输入框，页面结构可能已变更' };
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+    setter ? setter.call(field, value) : (field.value = value);
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    field.dispatchEvent(new Event('change', { bubbles: true }));
+    setter ? setter.call(code, '') : (code.value = '');
+    return { ok: true };
+  }, { value: company, selectors: COURT_SHIXIN_SELECTORS });
+}
+
+async function submitCourtQuery(session, code) {
+  return session.evaluate(({ value, selectors }) => {
+    const field = document.querySelector(selectors.captchaInput);
+    const submit = document.querySelector(selectors.submit);
+    if (!field || !submit) return { ok: false, reason: '未找到验证码输入框或查询按钮，页面结构可能已变更' };
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+    setter ? setter.call(field, value) : (field.value = value);
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    field.dispatchEvent(new Event('change', { bubbles: true }));
+    submit.click();
+    return { ok: true };
+  }, { value: code, selectors: COURT_SHIXIN_SELECTORS });
+}
+
+async function refreshCourtCaptcha(session) {
+  const refreshed = await session.evaluate((selectors) => {
+    const image = document.querySelector(selectors.captchaImage);
+    if (!image) return false;
+    image.click();
+    return true;
+  }, COURT_SHIXIN_SELECTORS);
+  if (refreshed) await sleep(900);
+  return refreshed;
+}
+
+async function waitForCourtResult(session, company, timeoutMs = 30000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    await waitUntilRunnable();
+    const state = await session.evaluate(({ value, selectors }) => {
+      const block = document.querySelector(selectors.resultBlock);
+      const visible = Boolean(block && getComputedStyle(block).display !== 'none' && !block.classList.contains('hide'));
+      const text = document.querySelector(selectors.resultBody)?.innerText?.trim() || '';
+      const headVisible = Boolean(document.querySelector(selectors.resultHead) && !document.querySelector(selectors.resultHead).classList.contains('hide'));
+      const records = [...document.querySelectorAll(`${selectors.resultBody} tr`)].filter((row) => row.innerText.trim()).length;
+      return {
+        visible,
+        text,
+        hasRecords: headVisible && records > 0,
+        noRecord: /没有找到|相关的结果/.test(text),
+        captchaFailure: /验证码错误|验证码已过期/.test(text),
+        companyPresent: text.includes(value)
+      };
+    }, { value: company, selectors: COURT_SHIXIN_SELECTORS });
+    if (!state.visible) { await sleep(400); continue; }
+    if (state.captchaFailure) return { status: '验证码未通过', reason: '中国执行信息公开网提示验证码错误或已过期', retryCaptcha: true };
+    if (state.noRecord) return { status: '无记录' };
+    if (state.hasRecords || state.companyPresent) return { status: '成功' };
+    await sleep(400);
+  }
+  return { status: '失败', reason: '等待中国执行信息公开网查询结果超时' };
+}
+
+async function runCourtShixinOne(session, company, query, settings, captureMode, notify, folder) {
+  await session.navigate(query.url);
+  const filled = await fillCourtCompany(session, company);
+  if (!filled.ok) return { status: '页面结构异常', reason: filled.reason };
+  let lastReason = '验证码未通过';
+  for (let attempt = 1; attempt <= settings.captchaRetry; attempt += 1) {
+    await waitUntilRunnable();
+    const imageResult = await waitForCourtCaptchaImage(session);
+    if (!imageResult.ok) {
+      lastReason = imageResult.reason;
+      await saveCaptchaDiagnostic(folder, company, query, `court-image-${attempt}`, { phase: 'court_image_load', reason: lastReason, ...imageResult.diagnostic }, null, notify);
+    } else {
+      const recognition = await recognizeCaptcha(await getOcr(), imageResult.image);
+      if (!recognition.code) {
+        lastReason = recognition.reason;
+        await saveCaptchaDiagnostic(folder, company, query, `court-ocr-${attempt}`, { phase: 'court_ocr', reason: lastReason, ...imageResult.diagnostic, ocrCandidates: recognition.candidates }, imageResult.image, notify);
+      } else {
+        notify(`中国执行信息公开网验证码 OCR 识别成功：${recognition.code}（第 ${attempt}/${settings.captchaRetry} 次）`);
+        const submitted = await submitCourtQuery(session, recognition.code);
+        if (!submitted.ok) return { status: '页面结构异常', reason: submitted.reason };
+        const outcome = await waitForCourtResult(session, company);
+        if (!outcome.retryCaptcha) {
+          if (outcome.status === '失败') return outcome;
+          const companyDir = path.join(folder, safeName(company));
+          await fs.mkdir(companyDir, { recursive: true });
+          const artifact = await saveResultArtifact(session, companyDir, SITE_CATALOG[query.siteCode].name, query.name, captureMode, company, notify);
+          return { status: outcome.status, screenshot: artifact.screenshot, artifactLabel: artifact.artifactLabel, reason: '' };
+        }
+        lastReason = outcome.reason;
+      }
+    }
+    if (attempt < settings.captchaRetry) {
+      const refreshed = await refreshCourtCaptcha(session);
+      if (!refreshed) return { status: '页面结构异常', reason: '未找到中国执行信息公开网验证码刷新控件' };
+      notify(`中国执行信息公开网验证码未通过：${lastReason}，已刷新后重试`);
+    }
+  }
+  return { status: '验证码未通过', reason: `${lastReason}；已完成 ${settings.captchaRetry} 次 OCR 尝试` };
+}
+
+async function waitForCcgpgPage(session, timeoutMs = 30000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const state = await session.evaluate((selectors) => {
+      const frame = document.querySelector(selectors.frame);
+      const doc = frame?.contentDocument;
+      return {
+        frameReady: Boolean(frame && doc),
+        inputReady: Boolean(doc?.querySelector(selectors.search)),
+        formReady: Boolean(doc?.querySelector(selectors.form)),
+        submitReady: Boolean(doc?.querySelector(selectors.submit)),
+        tableReady: Boolean(doc?.querySelector(selectors.resultTable))
+      };
+    }, CCGP_CR_SELECTORS);
+    if (state.frameReady && state.inputReady && state.formReady && state.submitReady && state.tableReady) return { ok: true };
+    await sleep(500);
+  }
+  return { ok: false, reason: '中国政府采购网查询 iframe 在 30 秒内未完成加载' };
+}
+
+async function fillAndSubmitCcgpg(session, company) {
+  return session.evaluate(({ value, selectors }) => {
+    const frame = document.querySelector(selectors.frame);
+    const doc = frame?.contentDocument;
+    const field = doc?.querySelector(selectors.search);
+    const form = doc?.querySelector(selectors.form);
+    if (!field || !form) return { ok: false, reason: '未找到企业名称输入框或查询表单，页面结构可能已变更' };
+    const initialRows = [...doc.querySelectorAll(selectors.resultRows)].filter((row) => row.innerText.trim()).length;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+    setter ? setter.call(field, value) : (field.value = value);
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    field.dispatchEvent(new Event('change', { bubbles: true }));
+    // The site binds its "查找" action to this form. Native submission avoids an unreliable iframe click dispatch.
+    form.submit();
+    return { ok: true, initialRows };
+  }, { value: company, selectors: CCGP_CR_SELECTORS });
+}
+
+async function waitForCcgpgResult(session, company, initialRows, timeoutMs = 30000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    await waitUntilRunnable();
+    const state = await session.evaluate(({ value, initialRows: expectedInitialRows, selectors }) => {
+      const doc = document.querySelector(selectors.frame)?.contentDocument;
+      const text = doc?.body?.innerText || '';
+      const rows = doc ? [...doc.querySelectorAll(selectors.resultRows)].filter((row) => row.innerText.trim()).length : 0;
+      const inputMatches = doc?.querySelector(selectors.search)?.value === value;
+      const queryFinished = inputMatches && (/查询结果：|查询内容：/.test(text) || rows !== expectedInitialRows);
+      return {
+        queryFinished,
+        rows,
+        noRecord: /没有该企业的相关记录|没有.*相关记录/.test(text),
+        text: text.slice(0, 500)
+      };
+    }, { value: company, initialRows, selectors: CCGP_CR_SELECTORS });
+    if (!state.queryFinished) { await sleep(500); continue; }
+    if (state.noRecord) return { status: '无记录' };
+    if (state.rows > 0) return { status: '成功' };
+    return { status: '失败', reason: `中国政府采购网未返回可识别的查询结果：${state.text.replace(/\s+/g, ' ').slice(0, 120)}` };
+  }
+  return { status: '失败', reason: '等待中国政府采购网查询结果超时' };
+}
+
+async function expandCcgpgFrame(session) {
+  return session.evaluate((selectors) => {
+    const frame = document.querySelector(selectors.frame);
+    const doc = frame?.contentDocument;
+    if (!frame || !doc) return { expanded: false };
+    const height = Math.max(950, doc.documentElement.scrollHeight, doc.body.scrollHeight);
+    frame.style.height = `${height}px`;
+    return { expanded: true, height };
+  }, CCGP_CR_SELECTORS);
+}
+
+async function runCcgpgOne(session, company, query, settings, captureMode, notify, folder) {
+  let lastError = '';
+  for (let attempt = 1; attempt <= settings.siteRetry; attempt += 1) {
+    await waitUntilRunnable();
+    try {
+      notify(`正在查询中国政府采购网：${query.name}${attempt > 1 ? `（第 ${attempt}/${settings.siteRetry} 次）` : ''}`);
+      await session.navigate(query.url);
+      const ready = await waitForCcgpgPage(session);
+      if (!ready.ok) throw new Error(ready.reason);
+      const submitted = await fillAndSubmitCcgpg(session, company);
+      if (!submitted.ok) return { status: '页面结构异常', reason: submitted.reason };
+      const outcome = await waitForCcgpgResult(session, company, submitted.initialRows);
+      if (outcome.status === '失败') throw new Error(outcome.reason);
+      await expandCcgpgFrame(session);
+      const companyDir = path.join(folder, safeName(company));
+      await fs.mkdir(companyDir, { recursive: true });
+      const artifact = await saveResultArtifact(session, companyDir, SITE_CATALOG[query.siteCode].name, query.name, captureMode, company, notify);
+      return {
+        status: outcome.status,
+        screenshot: artifact.screenshot,
+        artifactLabel: artifact.artifactLabel,
+        reason: artifact.capture?.truncated ? `页面高度 ${artifact.capture.originalHeight}px，截图已按 20000px 上限截断` : ''
+      };
+    } catch (error) {
+      if (taskStopped) throw error;
+      lastError = error.message;
+      notify(`中国政府采购网查询异常：${lastError}${attempt < settings.siteRetry ? '，正在重试' : ''}`);
+    }
+  }
+  return { status: '失败', reason: lastError || '中国政府采购网查询失败' };
+}
+
+async function waitForPlapPage(session, timeoutMs = 30000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const state = await session.evaluate((selectors) => ({
+      searchReady: Boolean(document.querySelector(selectors.search)),
+      submitReady: Boolean(document.querySelector(selectors.submit)),
+      listReady: Boolean(document.querySelector(selectors.resultList)),
+      suspendReady: Boolean(document.querySelector(`${selectors.listCard}[codes="suspend"]`)),
+      breakFaithReady: Boolean(document.querySelector(`${selectors.listCard}[codes="breakFaith"]`))
+    }), PLAP_PUNISH_SELECTORS);
+    if (state.searchReady && state.submitReady && state.listReady && state.suspendReady && state.breakFaithReady) return { ok: true };
+    await sleep(500);
+  }
+  return { ok: false, reason: '军队采购网查询控件在 30 秒内未完成加载' };
+}
+
+async function selectPlapList(session, listCode, timeoutMs = 70000) {
+  const selected = await session.evaluate(({ code, selectors }) => {
+    const card = document.querySelector(`${selectors.listCard}[codes="${code}"]`);
+    if (!card) return { ok: false, reason: `未找到军队采购${code === 'suspend' ? '暂停' : '失信'}名单入口` };
+    card.click();
+    return { ok: true };
+  }, { code: listCode, selectors: PLAP_PUNISH_SELECTORS });
+  if (!selected.ok) return selected;
+
+  const deadline = Date.now() + timeoutMs;
+  let latest = {};
+  while (Date.now() < deadline) {
+    await waitUntilRunnable();
+    latest = await session.evaluate(({ code, selectors }) => {
+      const card = document.querySelector(`${selectors.listCard}[codes="${code}"]`);
+      const loading = document.querySelector(selectors.loading);
+      const list = document.querySelector(selectors.resultList);
+      const text = list?.innerText.trim() || '';
+      return {
+        selected: Boolean(card?.classList.contains('actived')),
+        loading: Boolean(loading && getComputedStyle(loading).display !== 'none'),
+        rows: list?.querySelectorAll('li').length || 0,
+        failed: /加载失败|查询接口超时/.test(text),
+        text: text.slice(0, 300)
+      };
+    }, { code: listCode, selectors: PLAP_PUNISH_SELECTORS });
+    if (latest.failed) return { ok: false, reason: `军队采购${listCode === 'suspend' ? '暂停' : '失信'}名单加载失败：${latest.text.replace(/\s+/g, ' ').slice(0, 120)}` };
+    if (latest.selected && !latest.loading && latest.rows > 0) return { ok: true };
+    await sleep(500);
+  }
+  return { ok: false, reason: `军队采购${listCode === 'suspend' ? '暂停' : '失信'}名单默认列表加载超时` };
+}
+
+async function fillAndSubmitPlap(session, company) {
+  return session.evaluate(({ value, selectors }) => {
+    const field = document.querySelector(selectors.search);
+    const submit = document.querySelector(selectors.submit);
+    if (!field || !submit) return { ok: false, reason: '未找到军队采购网关键字输入框或查询按钮，页面结构可能已变更' };
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+    setter ? setter.call(field, value) : (field.value = value);
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    field.dispatchEvent(new Event('change', { bubbles: true }));
+    submit.click();
+    return { ok: true };
+  }, { value: company, selectors: PLAP_PUNISH_SELECTORS });
+}
+
+async function waitForPlapResult(session, company, timeoutMs = 70000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    await waitUntilRunnable();
+    const state = await session.evaluate(({ value, selectors }) => {
+      const field = document.querySelector(selectors.search);
+      const loading = document.querySelector(selectors.loading);
+      const list = document.querySelector(selectors.resultList);
+      const text = list?.innerText.trim() || '';
+      const rows = [...(list?.querySelectorAll('li') || [])].filter((row) => row.innerText.trim()).length;
+      return {
+        inputMatches: field?.value === value,
+        loading: Boolean(loading && getComputedStyle(loading).display !== 'none'),
+        rows,
+        noRecord: /没有查询到相关记录|暂无数据/.test(text),
+        failed: /加载失败|查询接口超时/.test(text),
+        companyPresent: text.includes(value),
+        text: text.slice(0, 400)
+      };
+    }, { value: company, selectors: PLAP_PUNISH_SELECTORS });
+    if (!state.inputMatches || state.loading) { await sleep(500); continue; }
+    if (state.failed) return { status: '失败', reason: `军队采购网查询失败：${state.text.replace(/\s+/g, ' ').slice(0, 160)}` };
+    if (state.noRecord) return { status: '无记录' };
+    if (state.rows > 0 && state.companyPresent) return { status: '成功' };
+    await sleep(500);
+  }
+  return { status: '失败', reason: '等待军队采购网查询结果超时' };
+}
+
+async function runPlapPunishOne(session, company, query, settings, captureMode, notify, folder) {
+  let lastError = '';
+  const listName = query.listCode === 'suspend' ? '暂停名单' : '失信名单';
+  for (let attempt = 1; attempt <= settings.siteRetry; attempt += 1) {
+    await waitUntilRunnable();
+    try {
+      notify(`正在查询军队采购网：${query.name}${attempt > 1 ? `（第 ${attempt}/${settings.siteRetry} 次）` : ''}`);
+      await session.navigate(query.url);
+      const ready = await waitForPlapPage(session);
+      if (!ready.ok) throw new Error(ready.reason);
+      const listReady = await selectPlapList(session, query.listCode);
+      if (!listReady.ok) throw new Error(listReady.reason);
+      const submitted = await fillAndSubmitPlap(session, company);
+      if (!submitted.ok) return { status: '页面结构异常', reason: submitted.reason };
+      const outcome = await waitForPlapResult(session, company);
+      if (outcome.status === '失败') throw new Error(outcome.reason);
+      const companyDir = path.join(folder, safeName(company));
+      await fs.mkdir(companyDir, { recursive: true });
+      const artifact = await saveResultArtifact(session, companyDir, SITE_CATALOG[query.siteCode].name, query.name, captureMode, company, notify);
+      return {
+        status: outcome.status,
+        screenshot: artifact.screenshot,
+        artifactLabel: artifact.artifactLabel,
+        reason: artifact.capture?.truncated ? `页面高度 ${artifact.capture.originalHeight}px，截图已按 20000px 上限截断` : ''
+      };
+    } catch (error) {
+      if (taskStopped) throw error;
+      lastError = error.message;
+      notify(`军队采购网${listName}查询异常：${lastError}${attempt < settings.siteRetry ? '，正在重试' : ''}`);
+    }
+  }
+  return { status: '失败', reason: lastError || `军队采购网${listName}查询失败` };
+}
+
+async function waitForPcczPage(session, timeoutMs = 30000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const state = await session.evaluate((selectors) => ({
+      formReady: Boolean(document.querySelector(selectors.form)),
+      searchReady: Boolean(document.querySelector(selectors.search)),
+      submitReady: Boolean(document.querySelector(selectors.submit))
+    }), PCCZ_SELECTORS);
+    if (state.formReady && state.searchReady && state.submitReady) return { ok: true };
+    await sleep(500);
+  }
+  return { ok: false, reason: '全国企业破产重整案件信息网查询控件在 30 秒内未完成加载' };
+}
+
+async function fillAndSubmitPccz(session, company) {
+  return session.evaluate(({ value, selectors }) => {
+    const form = document.querySelector(selectors.form);
+    const field = document.querySelector(selectors.search);
+    if (!form || !field) return { ok: false, reason: '未找到全国企业破产重整案件信息网搜索框或查询表单，页面结构可能已变更' };
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+    setter ? setter.call(field, value) : (field.value = value);
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    field.dispatchEvent(new Event('change', { bubbles: true }));
+    // The source form opens a new tab by default. Keep the result in this CDP-controlled page.
+    form.target = '_self';
+    form.requestSubmit();
+    return { ok: true };
+  }, { value: company, selectors: PCCZ_SELECTORS });
+}
+
+async function waitForPcczResult(session, company, timeoutMs = 30000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    await waitUntilRunnable();
+    const state = await session.evaluate(({ value, selectors }) => {
+      const text = document.body?.innerText || '';
+      const list = document.querySelector(selectors.resultList);
+      const listText = list?.innerText.trim() || '';
+      const rows = [...(list?.querySelectorAll('li') || [])].filter((row) => row.innerText.trim()).length;
+      const queryMatches = /关键字\s*[：:]/.test(text) && text.includes(value);
+      return {
+        queryMatches,
+        noRecord: /很抱歉[，,]?\s*没有找到.*相关结果|没有找到.*相关结果/.test(text),
+        recordsReady: /共搜索出\s*\d+\s*条记录/.test(listText),
+        rows,
+        text: listText.slice(0, 500)
+      };
+    }, { value: company, selectors: PCCZ_SELECTORS });
+    if (!state.queryMatches) { await sleep(400); continue; }
+    if (state.noRecord) return { status: '无记录' };
+    if (state.recordsReady && state.rows > 0) return { status: '成功' };
+    await sleep(400);
+  }
+  return { status: '失败', reason: '等待全国企业破产重整案件信息网查询结果超时' };
+}
+
+async function runPcczOne(session, company, query, settings, captureMode, notify, folder) {
+  let lastError = '';
+  for (let attempt = 1; attempt <= settings.siteRetry; attempt += 1) {
+    await waitUntilRunnable();
+    try {
+      notify(`正在查询全国企业破产重整案件信息网：${query.name}${attempt > 1 ? `（第 ${attempt}/${settings.siteRetry} 次）` : ''}`);
+      await session.navigate(query.url);
+      const ready = await waitForPcczPage(session);
+      if (!ready.ok) throw new Error(ready.reason);
+      const submitted = await fillAndSubmitPccz(session, company);
+      if (!submitted.ok) return { status: '页面结构异常', reason: submitted.reason };
+      const outcome = await waitForPcczResult(session, company);
+      if (outcome.status === '失败') throw new Error(outcome.reason);
+      const companyDir = path.join(folder, safeName(company));
+      await fs.mkdir(companyDir, { recursive: true });
+      const artifact = await saveResultArtifact(session, companyDir, SITE_CATALOG[query.siteCode].name, query.name, captureMode, company, notify);
+      return {
+        status: outcome.status,
+        screenshot: artifact.screenshot,
+        artifactLabel: artifact.artifactLabel,
+        reason: artifact.capture?.truncated ? `页面高度 ${artifact.capture.originalHeight}px，截图已按 20000px 上限截断` : ''
+      };
+    } catch (error) {
+      if (taskStopped) throw error;
+      lastError = error.message;
+      notify(`全国企业破产重整案件信息网查询异常：${lastError}${attempt < settings.siteRetry ? '，正在重试' : ''}`);
+    }
+  }
+  return { status: '失败', reason: lastError || '全国企业破产重整案件信息网查询失败' };
+}
+
+async function runOne(session, company, query, settings, captureMode, notify, folder) {
+  if (query.adapter === 'pccz-search') return runPcczOne(session, company, query, settings, captureMode, notify, folder);
+  if (query.adapter === 'plap-punish') return runPlapPunishOne(session, company, query, settings, captureMode, notify, folder);
+  if (query.adapter === 'ccgp-cr') return runCcgpgOne(session, company, query, settings, captureMode, notify, folder);
+  if (query.adapter === 'court-shixin') {
+    let lastResult = null;
+    for (let attempt = 1; attempt <= settings.siteRetry; attempt += 1) {
+      try {
+        const result = await runCourtShixinOne(session, company, query, settings, captureMode, notify, folder);
+        if (result.status === '成功' || result.status === '无记录') return result;
+        lastResult = result;
+      } catch (error) {
+        if (taskStopped) throw error;
+        lastResult = { status: '失败', reason: error.message };
+      }
+      if (attempt < settings.siteRetry) notify(`中国执行信息公开网查询异常：${lastResult.reason || lastResult.status}，正在进行第 ${attempt + 1}/${settings.siteRetry} 次站点重试`);
+    }
+    return lastResult || { status: '失败', reason: '中国执行信息公开网查询失败' };
+  }
+  return runCreditChinaOne(session, company, query, settings, captureMode, notify, folder);
+}
+
 async function runTask(input) {
   taskStopped = false;
   const folder = input.folder;
   const settings = { siteRetry: Math.max(1, input.settings.siteRetry || 5), captchaRetry: Math.max(1, input.settings.captchaRetry || 5), randomDelay: input.settings.randomDelay !== false };
   let state = input.resume ? await loadState(folder) : null;
-  if (!state) state = { project: input.project, companies: input.companies, siteCodes: ['W-001'], outputDir: folder, completed: [], results: {}, createdAt: new Date().toISOString() };
+  if (!state) state = { project: input.project, companies: input.companies, siteCodes: normalizeSiteCodes(input.siteCodes), outputDir: folder, captureMode: normalizeCaptureMode(input.settings.captureMode), completed: [], results: {}, createdAt: new Date().toISOString() };
+  state.siteCodes = normalizeSiteCodes(state.siteCodes || ['W-001']);
+  const captureMode = normalizeCaptureMode(state.captureMode || input.settings.captureMode);
   const companies = state.companies;
-  const queries = SITE_CATALOG['W-001'].queries;
+  const queries = queriesForSites(state.siteCodes);
+  if (!queries.length) throw new Error('未选择可执行的网站');
   const total = companies.length * queries.length;
   let done = state.completed.length;
   let reportIndex = Object.keys(state.results).length;
@@ -416,37 +1000,39 @@ async function runTask(input) {
   Object.values(state.results).forEach((row) => { if (row.status === '成功') summary.success += 1; else if (row.status === '无记录') summary.noRecord += 1; else if (row.status === '验证码未通过') summary.captcha += 1; else if (row.status === '跳过') summary.skipped += 1; else summary.failed += 1; });
   const session = new NativeSession({ profileDir: path.join(app.getPath('userData'), 'native-chrome-profile'), log: (message) => sendUpdate({ type: 'log', message }) });
   try {
-    sendUpdate({ type: 'started', total, done, folder, project: state.project, message: '正在启动原生浏览器并通过网站安全检查' });
-    await session.start(queries[0].url);
+    sendUpdate({ type: 'started', total, done, folder, project: state.project, message: `正在启动原生浏览器并通过网站安全检查，留存方式：${captureModeLabel(captureMode)}` });
+    const firstQuery = queries[0];
+    await session.start(firstQuery.url, { allowUntitledPage: Boolean(SITE_CATALOG[firstQuery.siteCode].allowUntitledPage) });
     for (let companyIndex = 0; companyIndex < companies.length; companyIndex += 1) {
       const company = companies[companyIndex];
       for (const query of queries) {
         await waitUntilRunnable();
-        const key = itemKey(company, 'W-001', query.name);
+        const key = itemKey(company, query.siteCode, query.name);
+        const siteName = SITE_CATALOG[query.siteCode].name;
         if (state.completed.includes(key)) {
-          sendUpdate({ type: 'progress', done, total, company, companyIndex: companyIndex + 1, companyTotal: companies.length, siteName: '信用中国', query: query.name, status: state.results[key]?.status || '已完成', message: '已从断点跳过完成项' });
+          sendUpdate({ type: 'progress', done, total, company, companyIndex: companyIndex + 1, companyTotal: companies.length, siteName, query: query.name, status: state.results[key]?.status || '已完成', message: '已从断点跳过完成项' });
           continue;
         }
         const notify = (message, level = '') => sendUpdate({ type: 'log', message, level });
-        sendUpdate({ type: 'progress', done, total, company, companyIndex: companyIndex + 1, companyTotal: companies.length, siteName: '信用中国', query: query.name, status: '进行中', message: `正在处理：${company}` });
-        const result = await runOne(session, company, query, settings, notify, folder);
+        sendUpdate({ type: 'progress', done, total, company, companyIndex: companyIndex + 1, companyTotal: companies.length, siteName, query: query.name, status: '进行中', message: `正在处理：${company}` });
+        const result = await runOne(session, company, query, settings, captureMode, notify, folder);
         done += 1;
         reportIndex += 1;
-        const row = { index: reportIndex, company, site: '信用中国', query: query.name, status: result.status, reason: result.reason || '', screenshot: result.screenshot || '', time: new Date().toLocaleString('zh-CN') };
+        const row = { index: reportIndex, company, site: siteName, query: query.name, status: result.status, exceptionStatus: exceptionStatus(result.status), captureMode: captureModeLabel(captureMode), reason: result.reason || '', screenshot: result.screenshot || '', time: new Date().toLocaleString('zh-CN') };
         state.completed.push(key);
         state.results[key] = row;
         await appendReport(reportPath, row);
         await saveState(folder, state);
         if (result.status === '成功') summary.success += 1; else if (result.status === '无记录') summary.noRecord += 1; else if (result.status === '验证码未通过') summary.captcha += 1; else summary.failed += 1;
         sendUpdate({ type: 'item', ...row });
-        sendUpdate({ type: 'progress', done, total, company, companyIndex: companyIndex + 1, companyTotal: companies.length, siteName: '信用中国', query: query.name, status: result.status, message: result.reason || '截图已保存' });
+        sendUpdate({ type: 'progress', done, total, company, companyIndex: companyIndex + 1, companyTotal: companies.length, siteName, query: query.name, status: result.status, message: result.reason || result.artifactLabel || '处理完成' });
         if (settings.randomDelay && done < total) await wait(1000 + Math.floor(Math.random() * 2000));
       }
     }
   } catch (error) {
     if (taskStopped) summary.cancelled = true;
     else { summary.failed += 1; sendUpdate({ type: 'log', level: 'error', message: `任务异常：${error.message}` }); }
-  } finally { session.stop(); }
+  } finally { await session.stop(); }
   let zipPath = '';
   try { zipPath = await zipFolder(folder, state.project); } catch (error) { sendUpdate({ type: 'log', level: 'error', message: error.message }); }
   sendUpdate({ type: 'completed', folder, reportPath, zipPath, summary, rows: Object.values(state.results), message: summary.cancelled ? '任务已取消，已保留当前结果' : '任务完成，已生成执行明细与归档文件' });
@@ -456,19 +1042,21 @@ ipcMain.handle('task:start', async (_event, payload) => {
   if (task?.running) return { ok: false, message: '已有任务正在运行' };
   const project = safeName(payload.project || '未命名任务');
   const companies = [...new Set((payload.companies || []).map((name) => String(name).trim()).filter(Boolean))].slice(0, 500);
+  const siteCodes = normalizeSiteCodes(payload.siteCodes);
   if (!companies.length) return { ok: false, message: '请至少输入一家企业' };
+  if (!siteCodes.length) return { ok: false, message: '请至少选择一个网站' };
   const outputBase = payload.outputBase || app.getPath('desktop');
   const folder = path.join(outputBase, project);
   await fs.mkdir(folder, { recursive: true });
   const existing = await loadState(folder);
-  if (existing && existing.completed.length < existing.companies.length * SITE_CATALOG['W-001'].queries.length && !payload.resume) return { ok: false, resumeAvailable: true, message: '发现未完成任务，请选择从断点继续或重新开始' };
+  if (existing && existing.completed.length < taskTotal(existing) && !payload.resume) return { ok: false, resumeAvailable: true, message: '发现未完成任务，请选择从断点继续或重新开始' };
   if ((payload.restart || existing) && !payload.resume) {
     await fs.rm(folder, { recursive: true, force: true });
     await fs.mkdir(folder, { recursive: true });
   }
   task = { running: true, folder };
   taskPaused = false;
-  runTask({ project, companies, folder, settings: payload.settings || {}, resume: Boolean(payload.resume) }).catch((error) => sendUpdate({ type: 'log', level: 'error', message: error.message })).finally(() => { if (task) task.running = false; });
+  runTask({ project, companies, siteCodes, folder, settings: payload.settings || {}, resume: Boolean(payload.resume) }).catch((error) => sendUpdate({ type: 'log', level: 'error', message: error.message })).finally(() => { if (task) task.running = false; });
   return { ok: true, folder };
 });
 ipcMain.handle('task:pause', () => { taskPaused = true; sendUpdate({ type: 'paused', message: '任务已暂停' }); return { ok: true }; });
@@ -477,7 +1065,7 @@ ipcMain.handle('task:stop', () => { taskStopped = true; taskPaused = false; send
 ipcMain.handle('task:inspect', async (_event, outputBase, project) => {
   const folder = path.join(outputBase || app.getPath('desktop'), safeName(project || ''));
   const state = await loadState(folder);
-  return { folder, state, resumable: Boolean(state && state.completed.length < state.companies.length * SITE_CATALOG['W-001'].queries.length) };
+  return { folder, state, total: state ? taskTotal(state) : 0, resumable: Boolean(state && state.completed.length < taskTotal(state)) };
 });
 ipcMain.handle('task:open-folder', async (_event, folder) => { const target = folder || task?.folder; if (target) await shell.openPath(target); return { ok: true }; });
 ipcMain.handle('task:open-report', async (_event, reportPath) => { if (reportPath) await shell.openPath(reportPath); return { ok: true }; });

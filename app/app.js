@@ -25,12 +25,18 @@ function companies() {
 
 function updateCompanyCount() { $('company-count').textContent = `共 ${companies().length} 家`; }
 
+function siteCodes() {
+  return [...document.querySelectorAll('input[name="site-code"]:checked')].map((element) => element.value);
+}
+
 function settings() {
   return {
     outputBase: $('setting-output-path').value.trim(),
     siteRetry: Math.max(1, Math.min(10, Number($('site-retry').value) || 5)),
     captchaRetry: Math.max(1, Math.min(10, Number($('captcha-retry').value) || 5)),
-    randomDelay: $('random-delay').checked
+    randomDelay: $('random-delay').checked,
+    captureMode: document.querySelector('input[name="capture-mode"]:checked')?.value === 'pdf' ? 'pdf' : 'png',
+    siteCodes: siteCodes()
   };
 }
 
@@ -47,11 +53,22 @@ function applySettings(values) {
   $('site-retry').value = values.siteRetry || 5;
   $('captcha-retry').value = values.captchaRetry || 5;
   $('random-delay').checked = values.randomDelay !== false;
+  const captureMode = values.captureMode === 'pdf' ? 'pdf' : 'png';
+  document.querySelector(`input[name="capture-mode"][value="${captureMode}"]`).checked = true;
+  const selectedSites = Array.isArray(values.siteCodes) ? values.siteCodes : ['W-001'];
+  document.querySelectorAll('input[name="site-code"]').forEach((element) => { element.checked = selectedSites.includes(element.value); });
 }
 
 function clearResultRows() {
   state.rows = [];
-  $('result-rows').innerHTML = '<tr class="empty"><td colspan="6">暂无执行记录</td></tr>';
+  $('result-rows').innerHTML = '<tr class="empty"><td colspan="7">暂无执行记录</td></tr>';
+}
+
+function displayExceptionStatus(row) {
+  if (row.exceptionStatus) return row.exceptionStatus;
+  if (row.status === '成功') return '异常';
+  if (row.status === '无记录') return '无异常';
+  return '查询异常';
 }
 
 function appendResultRow(row) {
@@ -59,7 +76,8 @@ function appendResultRow(row) {
   const body = $('result-rows');
   if (body.querySelector('.empty')) body.innerHTML = '';
   const tr = document.createElement('tr');
-  tr.innerHTML = `<td>${escapeHtml(row.company)}</td><td>${escapeHtml(row.site)}</td><td>${escapeHtml(row.query)}</td><td><span class="status ${escapeHtml(row.status)}">${escapeHtml(row.status)}</span></td><td>${escapeHtml(row.reason || '')}</td><td>${escapeHtml(row.screenshot || '')}</td>`;
+  const status = displayExceptionStatus(row);
+  tr.innerHTML = `<td>${escapeHtml(row.company)}</td><td>${escapeHtml(row.site)}</td><td>${escapeHtml(row.query)}</td><td><span class="status ${escapeHtml(status)}">${escapeHtml(status)}</span></td><td>${escapeHtml(row.captureMode || '')}</td><td>${escapeHtml(row.reason || '')}</td><td>${escapeHtml(row.screenshot || '')}</td>`;
   body.append(tr);
 }
 
@@ -117,7 +135,7 @@ function inspectResume() {
       return;
     }
     const done = inspection.state.completed.length;
-    const total = inspection.state.companies.length * 2;
+    const total = inspection.total;
     $('resume-copy').textContent = `“${inspection.state.project}”已完成 ${done}/${total} 项。`;
     $('resume-notice').classList.remove('hidden');
   }, 250);
@@ -126,9 +144,11 @@ function inspectResume() {
 async function startTask(mode = {}) {
   const project = $('project-name').value.trim();
   const list = companies();
+  const selectedSiteCodes = siteCodes();
   const outputBase = $('output-path').value.trim();
   if (!project) return toast('请填写项目名称');
   if (!list.length) return toast('请至少输入一家企业');
+  if (!selectedSiteCodes.length) return toast('请至少选择一个网站');
   if (list.length > 500) return toast('单批公司数量上限为 500 家');
   if (!outputBase) return toast('请选择保存路径');
   saveSettings(true);
@@ -148,7 +168,7 @@ async function startTask(mode = {}) {
   showView('progress');
   let result;
   try {
-    result = await window.electronAPI.startTask({ project, companies: list, outputBase, settings: settings(), ...mode });
+    result = await window.electronAPI.startTask({ project, companies: list, siteCodes: selectedSiteCodes, outputBase, settings: settings(), ...mode });
   } catch (error) {
     state.running = false;
     setControls();
@@ -218,6 +238,7 @@ $('choose-path').addEventListener('click', () => chooseFolder('output-path'));
 $('choose-setting-path').addEventListener('click', () => chooseFolder('setting-output-path'));
 $('project-name').addEventListener('input', inspectResume);
 $('output-path').addEventListener('change', inspectResume);
+document.querySelectorAll('input[name="site-code"]').forEach((element) => element.addEventListener('change', () => { saveSettings(true); inspectResume(); }));
 $('start-task').addEventListener('click', () => startTask());
 $('resume-task').addEventListener('click', () => startTask({ resume: true }));
 $('restart-task').addEventListener('click', () => startTask({ restart: true }));
@@ -236,7 +257,7 @@ window.electronAPI?.onTaskUpdate(handleTaskUpdate);
 (async function initialize() {
   const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
   const defaults = await window.electronAPI?.defaults();
-  applySettings({ outputBase: defaults?.outputBase || '', siteRetry: 5, captchaRetry: 5, randomDelay: true, ...stored });
+  applySettings({ outputBase: defaults?.outputBase || '', siteRetry: 5, captchaRetry: 5, randomDelay: true, captureMode: 'png', ...stored });
   updateCompanyCount();
   inspectResume();
 }());
