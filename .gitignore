@@ -24,3 +24,6 @@ Thumbs.db
 
 # Electron runtime cache
 electron/.runtime/
+
+# Electron packaged application outputs
+electron/release*/

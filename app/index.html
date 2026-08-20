@@ -3,68 +3,77 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>镜核 · 企业资质核查</title>
+    <title>企业信用截图工具</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div id="app" class="app-shell">
-      <aside class="sidebar">
-        <div class="brand-mark"><span class="brand-shield">◇</span><span>镜核</span></div>
-        <div class="brand-subtitle">企业资质核查</div>
-        <nav class="main-nav" aria-label="主导航">
-          <button class="nav-item active" data-view="overview"><span class="nav-icon">◫</span>总览</button>
-          <button class="nav-item" data-view="create"><span class="nav-icon">＋</span>新建任务</button>
-          <button class="nav-item" data-view="history"><span class="nav-icon">◷</span>任务记录</button>
-          <button class="nav-item" data-view="sites"><span class="nav-icon">⌁</span>站点适配</button>
-          <button class="nav-item" data-view="settings"><span class="nav-icon">⚙</span>设置</button>
-        </nav>
-        <div class="sidebar-spacer"></div>
-        <div class="system-card">
-          <div class="system-card-label">本地工作区</div>
-          <div class="system-card-value"><span class="status-dot"></span>数据仅保存在本机</div>
-          <div class="system-card-path">D:\\核查任务\\2026</div>
-        </div>
-        <div class="profile-row"><div class="avatar">审</div><div><strong>审查工作台</strong><small>本地操作员</small></div><span class="profile-more">···</span></div>
-      </aside>
+    <main class="workspace">
+      <header class="app-header">
+        <div class="brand"><span class="brand-mark">核</span><div><strong>企业信用截图工具</strong><small>本地证据留存工作台</small></div></div>
+        <div class="local-state"><i></i>本地运行</div>
+      </header>
 
-      <main class="main-content">
-        <header class="topbar">
-          <div><div class="breadcrumb">工作台 / <span id="crumb">总览</span></div><h1 id="page-title">早上好，准备开始核查？</h1></div>
-          <div class="topbar-actions"><div class="local-pill"><span class="status-dot"></span>本地模式</div><button class="icon-button" title="通知">♧</button><button class="icon-button" title="帮助">?</button></div>
-        </header>
+      <nav class="tabs" aria-label="工作区导航">
+        <button class="tab active" data-view="config">任务配置</button>
+        <button class="tab" data-view="progress">执行进度</button>
+        <button class="tab" data-view="result">任务结果</button>
+        <button class="tab" data-view="settings">设置</button>
+      </nav>
 
-        <section id="overview-view" class="view active-view">
-          <div class="hero-row">
-            <div class="hero-copy"><span class="eyebrow">今日核查概览</span><h2>把重复查询，交给镜核。</h2><p>批量处理企业名单，逐项留存公开网站证据。你可以随时查看浏览器过程，也可以隐藏运行。</p><button class="primary-button" id="new-task-button"><span>＋</span> 新建核查任务</button></div>
-            <div class="hero-orbit"><div class="orbit-ring ring-one"></div><div class="orbit-ring ring-two"></div><div class="orbit-core">镜<br /><b>核</b></div><div class="orbit-label label-one">批量</div><div class="orbit-label label-two">留档</div><div class="orbit-label label-three">可追踪</div></div>
+      <section class="view active" id="config-view">
+        <div class="page-heading"><div><h1>任务配置</h1><p>输入项目与公司名单，选择目标网站后开始执行。</p></div><span class="scope-pill">W-001 已适配</span></div>
+        <section class="panel">
+          <h2>项目与公司名单</h2>
+          <label class="field wide"><span>项目名称 <b>*</b></span><input id="project-name" maxlength="80" placeholder="例如：标前审查-项目 A" /></label>
+          <div class="company-row">
+            <label class="field company-field"><span>公司名单 <b>*</b></span><textarea id="companies" spellcheck="false" placeholder="每行输入一家企业名称"></textarea><small id="company-count">共 0 家</small></label>
+            <div class="import-actions"><label class="button outline upload">导入文件<input type="file" id="company-file" accept=".txt,.csv,.xls,.xlsx" /></label><button class="button quiet" id="clear-companies">清空</button><small id="file-note">支持 TXT、CSV、XLSX，读取首列</small></div>
           </div>
-
-          <div class="stat-grid">
-            <article class="stat-card accent-cyan"><div class="stat-head"><span>进行中的任务</span><span class="stat-symbol">↗</span></div><div class="stat-value" id="running-stat">1</div><div class="stat-foot"><span class="trend-up">●</span> 当前任务正在运行</div></article>
-            <article class="stat-card accent-amber"><div class="stat-head"><span>待核查企业</span><span class="stat-symbol">◌</span></div><div class="stat-value" id="pending-stat">24</div><div class="stat-foot">来自最近一次任务</div></article>
-            <article class="stat-card accent-green"><div class="stat-head"><span>已留存证据</span><span class="stat-symbol">✓</span></div><div class="stat-value" id="evidence-stat">86</div><div class="stat-foot"><span class="trend-up">+12%</span> 较上周</div></article>
-            <article class="stat-card accent-coral"><div class="stat-head"><span>需要关注</span><span class="stat-symbol">!</span></div><div class="stat-value" id="attention-stat">3</div><div class="stat-foot">失败或待人工处理</div></article>
-          </div>
-
-          <div class="section-heading"><div><span class="eyebrow">执行中心</span><h3>正在处理</h3></div><button class="ghost-button" id="view-history">查看全部记录 <span>→</span></button></div>
-          <article class="active-task-card" id="active-task-card">
-            <div class="active-task-main"><div class="task-icon">▣</div><div class="task-title-wrap"><div class="task-kicker">任务 · 2026-08-18 09:42</div><h3 id="active-task-name">投标企业标前核查 · 8 家企业</h3><div class="task-meta"><span class="task-status running"><span class="status-dot"></span><span id="active-task-status">运行中</span></span><span>信用中国 · 政府采购网 · 执行信息公开网</span><span id="active-task-time">已运行 04:32</span></div></div><div class="task-progress-block"><div class="progress-label"><span id="progress-text">执行进度</span><strong id="progress-percent">62%</strong></div><div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:62%"></div></div><div class="progress-detail" id="progress-detail">第 5 家 / 共 8 家 · 当前：信用中国</div></div><button class="more-button" title="更多操作">···</button></div>
-            <div class="task-lower"><div class="browser-preview" id="browser-preview"><div class="browser-top"><div class="browser-dots"><i></i><i></i><i></i></div><div class="browser-tab"><span class="site-favicon">信</span><span id="browser-site">信用中国 · 严重失信主体名单</span></div><div class="browser-control">— □ ×</div></div><div class="browser-address"><span>⌕</span><span id="browser-url">creditchina.gov.cn/query</span><span class="browser-lock">⌑</span></div><div class="browser-page" id="browser-page"><div class="page-banner"><div class="page-seal">★</div><div><strong>信用中国</strong><small>WWW.CREDITCHINA.GOV.CN</small></div></div><div class="page-nav">信息公示　 信用动态　 信用立法　 政策法规　 信用承诺</div><div class="page-content"><div class="page-title">严重失信主体名单查询</div><div class="fake-search"><span id="browser-company">中招工业发展（北京）有限公司</span><button>查询</button></div><div class="fake-result"><div class="result-line"></div><div class="result-line short"></div><span class="result-hint" id="browser-result">正在等待结果加载...</span></div></div></div></div><div class="browser-hidden-state" id="browser-hidden-state"><div class="hidden-orb">⌁</div><strong>浏览器已隐藏</strong><span>任务正在后台独立运行，不会打断你的其他操作</span><button class="small-button" id="show-browser-button">显示浏览器</button></div><div class="task-side-actions"><button class="secondary-button" id="toggle-browser"><span>◉</span><span id="toggle-browser-label">隐藏浏览器</span></button><button class="secondary-button" id="pause-task"><span>Ⅱ</span><span id="pause-label">暂停任务</span></button><button class="secondary-button" id="open-folder">▣ 打开截图目录</button><div class="task-note"><span class="note-icon">i</span><span>完成后会生成 Excel 汇总报告</span></div></div></div>
-          </article>
-
-          <div class="bottom-grid"><section class="panel-card site-panel"><div class="panel-header"><div><span class="eyebrow">核查范围</span><h3>目标网站</h3></div><button class="link-button" data-view="sites">管理适配 →</button></div><div class="site-list"><div class="site-row"><span class="site-badge red">信</span><div><strong>信用中国</strong><small>2 个核查项 · 已适配</small></div><span class="site-state ready">可用</span></div><div class="site-row"><span class="site-badge blue">执</span><div><strong>中国执行信息公开网</strong><small>失信被执行人 · 已适配</small></div><span class="site-state ready">可用</span></div><div class="site-row"><span class="site-badge navy">采</span><div><strong>中国政府采购网</strong><small>严重违法失信记录 · 适配中</small></div><span class="site-state pending">适配中</span></div></div></section><section class="panel-card recent-panel"><div class="panel-header"><div><span class="eyebrow">最近活动</span><h3>任务记录</h3></div><button class="link-button" id="view-history-2">全部记录 →</button></div><div class="recent-row"><div class="recent-icon green">✓</div><div><strong>货物类供应商核查</strong><small>8 家企业 · 6 分钟前</small></div><span class="recent-result">已完成</span></div><div class="recent-row"><div class="recent-icon amber">!</div><div><strong>服务类供应商核查</strong><small>12 家企业 · 昨天 16:28</small></div><span class="recent-result warning">部分完成</span></div><div class="recent-row"><div class="recent-icon gray">◷</div><div><strong>工程项目标前审查</strong><small>26 家企业 · 8 月 15 日</small></div><span class="recent-result">已完成</span></div></section></div>
         </section>
 
-        <section id="history-view" class="view"><div class="page-section-head"><div><span class="eyebrow">任务中心</span><h2>任务记录</h2><p>所有任务都按企业和核查项保存，方便继续与复核。</p></div><button class="primary-button" id="history-new-task">＋ 新建任务</button></div><div class="filter-bar"><button class="filter-chip active">全部</button><button class="filter-chip">已完成</button><button class="filter-chip">部分完成</button><button class="filter-chip">待处理</button><div class="filter-search">⌕ 搜索任务或企业</div></div><div class="history-table" id="history-table"></div></section>
+        <section class="panel"><h2>目标网站</h2>
+          <div class="site-grid">
+            <label class="site enabled"><input type="checkbox" checked disabled /><span class="check"></span><span><strong>W-001 信用中国</strong><small>严重失信主体名单、重大税收违法失信主体名单</small></span><em>已适配</em></label>
+            <label class="site"><input type="checkbox" disabled /><span class="check"></span><span><strong>W-002 中国执行信息公开网</strong><small>失信被执行人</small></span><em>待适配</em></label>
+            <label class="site"><input type="checkbox" disabled /><span class="check"></span><span><strong>W-003 中国政府采购网</strong><small>严重违法失信行为记录名单</small></span><em>待适配</em></label>
+            <label class="site"><input type="checkbox" disabled /><span class="check"></span><span><strong>W-004 军队采购网</strong><small>暂停名单、失信名单</small></span><em>待适配</em></label>
+            <label class="site"><input type="checkbox" disabled /><span class="check"></span><span><strong>W-005 全国企业破产重整案件信息网</strong><small>企业破产重整案件信息</small></span><em>待适配</em></label>
+            <label class="site"><input type="checkbox" disabled /><span class="check"></span><span><strong>W-006 国家企业信用信息公示系统</strong><small>企业信用与违法失信名单</small></span><em>待适配</em></label>
+          </div>
+        </section>
 
-        <section id="sites-view" class="view"><div class="page-section-head"><div><span class="eyebrow">连接管理</span><h2>站点适配</h2><p>每个网站和子查询类型独立维护执行规则。</p></div><div class="local-pill"><span class="status-dot"></span>本地配置</div></div><div class="site-manager-grid"><article class="site-manager-card"><div class="site-card-top"><span class="site-badge red">信</span><span class="site-state ready">已适配</span></div><h3>信用中国</h3><p>信用中国 · 严重失信主体名单<br />信用中国 · 重大税收违法失信主体</p><div class="site-card-footer">最近检查：今天 09:34 <span>···</span></div></article><article class="site-manager-card"><div class="site-card-top"><span class="site-badge blue">执</span><span class="site-state ready">已适配</span></div><h3>中国执行信息公开网</h3><p>失信被执行人</p><div class="site-card-footer">最近检查：昨天 16:02 <span>···</span></div></article><article class="site-manager-card muted-card"><div class="site-card-top"><span class="site-badge navy">采</span><span class="site-state pending">适配中</span></div><h3>中国政府采购网</h3><p>政府采购严重违法失信行为记录名单</p><div class="site-card-footer">需要补充结果定位规则 <span>···</span></div></article></div></section>
+        <section class="panel"><h2>保存路径</h2><div class="path-line"><label class="field"><span>保存路径 <b>*</b></span><input id="output-path" /></label><button class="button outline" id="choose-path">浏览</button></div></section>
+        <div class="resume-notice hidden" id="resume-notice"><div><strong>发现未完成任务</strong><span id="resume-copy"></span></div><div><button class="button quiet" id="restart-task">重新开始</button><button class="button primary" id="resume-task">从断点继续</button></div></div>
+        <div class="submit-line"><span>任务会在后台真实浏览器中执行，截图仅保存在本机。</span><button class="button primary large" id="start-task">开始执行</button></div>
+      </section>
 
-        <section id="settings-view" class="view"><div class="page-section-head"><div><span class="eyebrow">工作区偏好</span><h2>设置</h2><p>管理本地任务的默认行为。</p></div></div><div class="settings-card"><div class="setting-row"><div><strong>默认显示浏览器预览</strong><small>任务开始时展示动态浏览器画面，运行中可随时隐藏</small></div><label class="switch"><input type="checkbox" checked /><span></span></label></div><div class="setting-row"><div><strong>任务完成后打开结果摘要</strong><small>显示成功、无记录、失败和待人工处理数量</small></div><label class="switch"><input type="checkbox" checked /><span></span></label></div><div class="setting-row"><div><strong>默认截图目录</strong><small>D:\\核查任务\\2026</small></div><button class="secondary-button">选择目录</button></div></div></section>
-      </main>
-    </div>
+      <section class="view" id="progress-view">
+        <div class="page-heading"><div><h1>执行进度</h1><p>任务执行期间实时展示进度，可随时暂停或取消。</p></div><span class="task-state" id="run-state">尚未开始</span></div>
+        <section class="panel progress-panel"><h2>进度概览</h2><div class="progress-track"><i id="progress-fill"></i></div><div class="progress-line"><strong id="progress-title">尚未开始</strong><span id="progress-status">等待创建任务</span></div></section>
+        <section class="panel log-panel"><h2>运行日志</h2><div id="run-log" class="log-output" aria-live="polite">等待任务开始。</div></section>
+        <div class="run-actions"><button class="button outline" id="pause-task" disabled>暂停</button><button class="button danger" id="stop-task" disabled>取消任务</button></div>
+      </section>
 
-    <div class="modal-backdrop" id="task-modal" aria-hidden="true"><section class="task-modal"><button class="modal-close" id="close-modal">×</button><div class="modal-eyebrow">新建核查任务</div><h2>从一批企业开始</h2><p class="modal-lead">导入企业名单，选择本次需要查询的网站和核查项。</p><div class="input-section"><div class="input-label"><strong>企业名单</strong><span id="input-count">0 家</span></div><textarea id="company-input" placeholder="每行输入一个企业名称，例如：&#10;中招工业发展（北京）有限公司&#10;华北建设集团有限公司"></textarea><div class="input-actions"><label class="file-button">↥ 导入 Excel / CSV<input type="file" id="company-file" accept=".xlsx,.xls,.csv,.txt" /></label><button class="text-button" id="use-demo-data">使用示例名单</button></div><div class="file-hint" id="file-hint">支持 Excel、CSV 或 TXT；Electron 模式会解析 Excel 第一张表的第一列。</div></div><div class="site-select-section"><div class="input-label"><strong>核查项</strong><span>已选择 <b id="selected-site-count">1</b> 项</span></div><div class="site-check-grid"><label class="site-check checked"><input type="checkbox" checked data-site="信用中国 · 严重失信主体名单" /><span class="site-check-mark">✓</span><span><strong>信用中国</strong><small>严重失信主体名单 · 首个真实适配</small></span></label><label class="site-check"><input type="checkbox" data-site="信用中国 · 重大税收违法失信主体" /><span class="site-check-mark">✓</span><span><strong>信用中国</strong><small>重大税收违法失信主体 · 待适配</small></span></label><label class="site-check"><input type="checkbox" data-site="中国执行信息公开网 · 失信被执行人" /><span class="site-check-mark">✓</span><span><strong>执行信息公开网</strong><small>失信被执行人 · 待适配</small></span></label><label class="site-check"><input type="checkbox" data-site="中国政府采购网 · 严重违法失信记录" /><span class="site-check-mark">✓</span><span><strong>中国政府采购网</strong><small>严重违法失信记录 · 待适配</small></span></label></div></div><div class="run-mode-section"><div class="input-label"><strong>浏览器运行模式</strong></div><div class="mode-switch"><button class="mode-option active" data-mode="visible"><span>◉</span><strong>可视化执行</strong><small>查看浏览器动态过程</small></button><button class="mode-option" data-mode="hidden"><span>⌁</span><strong>隐藏运行</strong><small>不打断其他电脑操作</small></button></div></div><div class="modal-footer"><span class="modal-note">任务将在本地执行，截图不会上传</span><button class="primary-button" id="start-task">开始执行 <span>→</span></button></div></section></div>
-    <div class="toast" id="toast"></div>
+      <section class="view" id="result-view">
+        <div class="page-heading"><div><h1>任务结果</h1><p>执行明细会实时写入 CSV，并在结束后按项目归档。</p></div><span class="task-state" id="result-state">暂无任务结果</span></div>
+        <section class="panel result-summary" id="result-summary">尚未生成任务结果。</section>
+        <section class="panel table-panel"><h2>执行明细</h2><div class="table-wrap"><table><thead><tr><th>公司名称</th><th>网站</th><th>查询项</th><th>状态</th><th>失败原因</th><th>截图文件</th></tr></thead><tbody id="result-rows"><tr class="empty"><td colspan="6">暂无执行记录</td></tr></tbody></table></div></section>
+        <div class="result-actions"><button class="button outline" id="open-output" disabled>打开输出目录</button><button class="button outline" id="open-report" disabled>打开明细报告</button></div>
+      </section>
+
+      <section class="view" id="settings-view">
+        <div class="page-heading"><div><h1>设置</h1><p>默认保存位置、重试策略与任务请求节奏。</p></div></div>
+        <section class="panel settings-panel"><h2>常规设置</h2>
+          <div class="setting-row"><label class="field"><span>默认保存路径</span><input id="setting-output-path" /></label><button class="button outline" id="choose-setting-path">浏览</button></div>
+          <label class="field compact"><span>站点重试次数</span><input id="site-retry" type="number" min="1" max="10" /></label>
+          <label class="field compact"><span>验证码重试次数</span><input id="captcha-retry" type="number" min="1" max="10" /></label>
+          <label class="toggle"><input id="random-delay" type="checkbox" /><span></span>请求间随机延迟 1 至 3 秒</label>
+        </section>
+        <section class="panel license-panel"><h2>License</h2><p>开发版（未激活）</p><small>本应用不会上传企业名单、截图或执行报告。</small></section>
+        <div class="submit-line"><span></span><button class="button primary" id="save-settings">保存设置</button></div>
+      </section>
+    </main>
+    <div class="toast" id="toast" role="status"></div>
     <script src="./app.js"></script>
   </body>
 </html>

@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "WebSearch"
+      "WebSearch",
+      "WebFetch(domain:yb.tencent.com)",
+      "WebFetch(domain:www.creditchina.gov.cn)"
     ]
   }
 }

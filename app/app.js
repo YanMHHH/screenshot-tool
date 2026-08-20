@@ -1,40 +1,242 @@
-const demoCompanies = ['中招工业发展（北京）有限公司', '华北建设集团有限公司', '远东科技发展有限公司', '新城城市建设有限公司', '中原设备采购有限公司', '东岳工程服务有限公司', '天衡供应链有限公司', '启明信息技术有限公司'];
-const demoSites = ['信用中国 · 严重失信主体名单', '信用中国 · 重大税收违法失信主体', '中国执行信息公开网 · 失信被执行人'];
-const state = { view:'overview', browserVisible:true, paused:false, running:true, progress:62, companyIndex:5, taskName:'投标企业标前核查 · 8 家企业', mode:'visible', companies:demoCompanies, selectedSites:demoSites, tasks:[{name:'投标企业标前核查 · 8 家企业', time:'今天 09:42', status:'运行中', meta:'8 家企业 · 24 个核查项', progress:'62%'}] };
 const $ = (id) => document.getElementById(id);
-const siteChecks = () => [...document.querySelectorAll('.site-check input')];
+const STORAGE_KEY = 'capture-tool-settings-v1';
+const state = { running: false, paused: false, outputFolder: '', reportPath: '', rows: [] };
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' })[char]);
+}
+
+function toast(message) {
+  const element = $('toast');
+  element.textContent = message;
+  element.classList.add('show');
+  clearTimeout(window.toastTimer);
+  window.toastTimer = setTimeout(() => element.classList.remove('show'), 2600);
+}
 
 function showView(view) {
-  state.view = view;
-  document.querySelectorAll('.view').forEach((el) => el.classList.remove('active-view'));
-  const target = $(`${view}-view`);
-  if (target) target.classList.add('active-view');
-  document.querySelectorAll('.nav-item').forEach((el) => el.classList.toggle('active', el.dataset.view === view));
-  const labels = { overview:'总览', history:'任务记录', sites:'站点适配', settings:'设置', create:'新建任务' };
-  $('crumb').textContent = labels[view] || '总览';
-  $('page-title').textContent = view === 'overview' ? '早上好，准备开始核查？' : (view === 'history' ? '所有任务，都在这里' : labels[view]);
-  if (view === 'history') renderHistory();
+  document.querySelectorAll('.tab').forEach((tab) => tab.classList.toggle('active', tab.dataset.view === view));
+  document.querySelectorAll('.view').forEach((section) => section.classList.toggle('active', section.id === `${view}-view`));
 }
-function toast(message) { const el = $('toast'); el.textContent = message; el.classList.add('show'); clearTimeout(window.__toast); window.__toast = setTimeout(() => el.classList.remove('show'), 2600); }
-function openModal() { $('task-modal').classList.add('open'); $('task-modal').setAttribute('aria-hidden','false'); $('company-input').focus(); }
-function closeModal() { $('task-modal').classList.remove('open'); $('task-modal').setAttribute('aria-hidden','true'); }
-function updateCount() { const count = $('company-input').value.split(/\r?\n|,|，/).map(s=>s.trim()).filter(Boolean).length; $('input-count').textContent = `${count} 家`; }
-function updateSiteCount() { const count = siteChecks().filter(i=>i.checked).length; $('selected-site-count').textContent = `${count}`; document.querySelectorAll('.site-check').forEach(label => label.classList.toggle('checked', label.querySelector('input').checked)); }
-function syncBrowserBounds() { if (!window.electronAPI || !state.browserVisible) return; const target = $('browser-page'); if (!target) return; const rect = target.getBoundingClientRect(); window.electronAPI.setBrowserBounds({ x:rect.left, y:rect.top, width:rect.width, height:rect.height }); }
-function updateBrowserMode() { const preview = $('browser-preview'); const hidden = $('browser-hidden-state'); preview.style.display = state.browserVisible ? 'block' : 'none'; hidden.style.display = state.browserVisible ? 'none' : 'flex'; $('toggle-browser-label').textContent = state.browserVisible ? '隐藏浏览器' : '显示浏览器'; if (state.browserVisible) requestAnimationFrame(syncBrowserBounds); }
-function updateTaskUI() { $('progress-percent').textContent = `${state.progress}%`; $('progress-fill').style.width = `${state.progress}%`; $('progress-detail').textContent = `第 ${Math.min(state.companyIndex, state.companies.length)} 家 / 共 ${state.companies.length} 家 · 当前：${state.selectedSites[(state.companyIndex + 1) % state.selectedSites.length] || '信用中国'}`; $('active-task-name').textContent = state.taskName; $('active-task-status').textContent = state.paused ? '已暂停' : (state.running ? '运行中' : '已完成'); $('pause-label').textContent = state.paused ? '继续任务' : '暂停任务'; $('browser-company').textContent = state.companies[Math.min(state.companyIndex - 1, state.companies.length - 1)] || demoCompanies[0]; $('browser-result').textContent = state.paused ? '等待人工处理...' : (state.running ? '正在等待结果加载...' : '查询完成，截图已保存'); }
-function startSimulation() { clearInterval(window.__runner); window.__runner = setInterval(() => { if (!state.running || state.paused) return; state.progress += 4; if (state.progress >= 100) { state.progress = 100; state.running = false; state.companyIndex = state.companies.length; clearInterval(window.__runner); toast('任务已完成，截图目录和 Excel 报告已生成'); } else if (state.progress % 12 === 0) state.companyIndex = Math.min(state.companies.length, state.companyIndex + 1); updateTaskUI(); }, 1600); }
-function renderHistory() { const rows = state.tasks.map(t => `<div class="history-row"><div><strong>${t.name}</strong><small>${t.time} · ${t.meta}</small></div><div class="history-status ${t.status === '部分完成' ? 'warn' : 'done'}">${t.status}</div><div>${t.progress || '100%'}</div><div><button class="link-button">查看详情 →</button></div></div>`).join(''); $('history-table').innerHTML = `<div class="history-row header"><div>任务名称</div><div>状态</div><div>进度</div><div>操作</div></div>${rows}`; }
-async function startNewTask() { const names = $('company-input').value.split(/\r?\n|,|，/).map(s=>s.trim()).filter(Boolean); const selected = siteChecks().filter(i=>i.checked).map(i=>i.dataset.site); if (!names.length) { toast('请先输入或导入至少一家企业'); return; } if (!selected.length) { toast('请至少选择一个核查项'); return; } state.companies = [...new Set(names)]; state.selectedSites = selected; state.taskName = `企业资质核查 · ${state.companies.length} 家企业`; state.progress = 3; state.companyIndex = 1; state.running = true; state.paused = false; state.browserVisible = document.querySelector('.mode-option.active')?.dataset.mode !== 'hidden'; state.tasks.unshift({ name:state.taskName, time:'刚刚', status:'运行中', meta:`${state.companies.length} 家企业 · ${selected.length * state.companies.length} 个核查项`, progress:'3%' }); closeModal(); showView('overview'); updateBrowserMode(); updateTaskUI(); if (window.electronAPI) { const response = await window.electronAPI.startTask({ companies:state.companies, sites:selected, outputFolder:null }); if (!response?.ok) toast(response?.message || '任务启动失败'); else toast('真实查询任务已启动'); } else { startSimulation(); toast('演示任务已启动'); } }
-document.querySelectorAll('.nav-item').forEach(btn => btn.addEventListener('click', () => btn.dataset.view === 'create' ? openModal() : showView(btn.dataset.view)));
-['new-task-button','history-new-task'].forEach(id => $(id).addEventListener('click', openModal));
-['view-history','view-history-2'].forEach(id => $(id).addEventListener('click', () => showView('history')));
-$('close-modal').addEventListener('click', closeModal); $('task-modal').addEventListener('click', (e) => { if (e.target === $('task-modal')) closeModal(); });
-$('company-input').addEventListener('input', updateCount); $('use-demo-data').addEventListener('click', () => { $('company-input').value = demoCompanies.join('\n'); updateCount(); toast('已载入 8 家示例企业'); });
-$('company-file').addEventListener('change', (e) => { const file = e.target.files[0]; if (!file) return; if (/\.xlsx?$|\.xls$/i.test(file.name) && window.electronAPI?.parseExcel) { const reader = new FileReader(); reader.onload = async () => { try { const names = await window.electronAPI.parseExcel(reader.result); $('company-input').value = names.join('\n'); $('file-hint').textContent = `${file.name} 已解析，读取 ${names.length} 家企业`; updateCount(); } catch (error) { toast(`Excel 解析失败：${error.message}`); } }; reader.readAsArrayBuffer(file); } else if (/\.txt$|\.csv$/i.test(file.name)) { $('file-hint').textContent = `${file.name} 已载入`; const reader = new FileReader(); reader.onload = () => { $('company-input').value = String(reader.result).replace(/\r/g,'').split(/\n|,/).map(s=>s.trim()).filter(Boolean).join('\n'); updateCount(); }; reader.readAsText(file, 'utf-8'); } else { toast('请选择 Excel、CSV 或 TXT 文件'); } });
-siteChecks().forEach(input => input.addEventListener('change', updateSiteCount)); document.querySelectorAll('.mode-option').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('.mode-option').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); state.mode = btn.dataset.mode; }));
-$('start-task').addEventListener('click', startNewTask);
-$('toggle-browser').addEventListener('click', () => { if (window.electronAPI) window.electronAPI.toggleBrowser(!state.browserVisible); }); $('show-browser-button').addEventListener('click', () => { if (window.electronAPI) window.electronAPI.toggleBrowser(true); }); $('pause-task').addEventListener('click', async () => { state.paused = !state.paused; if (window.electronAPI) { await (state.paused ? window.electronAPI.pauseTask() : window.electronAPI.resumeTask()); } updateTaskUI(); toast(state.paused ? '任务已暂停' : '任务继续执行'); }); $('open-folder').addEventListener('click', () => window.electronAPI ? window.electronAPI.openFolder() : toast('演示模式：任务完成后将在此处打开截图目录'));
-if (window.electronAPI) window.electronAPI.onTaskUpdate((update) => { if (typeof update.progress === 'number') state.progress = update.progress; if (typeof update.browserVisible === 'boolean') { state.browserVisible = update.browserVisible; updateBrowserMode(); } if (update.index) state.companyIndex = update.index; if (update.total) state.companies = state.companies.length ? state.companies : demoCompanies; if (update.company) $('browser-company').textContent = update.company; if (update.status === 'paused' || update.status === 'manual') state.paused = true; if (update.status === 'running' || update.status === 'success') state.paused = false; if (update.status === 'completed' || update.status === 'stopped') state.running = false; if (update.message) $('browser-result').textContent = update.message; if (update.site) $('browser-site').textContent = update.site; if (update.folder) state.taskFolder = update.folder; updateTaskUI(); if (update.status === 'manual') toast('需要人工处理：请在浏览器中完成验证后点击继续'); if (update.status === 'completed') toast(`任务已完成，报告已生成：${update.reportPath || update.folder}`); if (update.status === 'failed') toast(`执行失败：${update.message}`); });
-window.addEventListener('resize', syncBrowserBounds); window.addEventListener('scroll', syncBrowserBounds, true);
-updateCount(); updateSiteCount(); updateBrowserMode(); updateTaskUI(); if (!window.electronAPI) startSimulation();
+
+function companies() {
+  return [...new Set($('companies').value.split(/\r?\n|,|，/).map((name) => name.trim()).filter(Boolean))];
+}
+
+function updateCompanyCount() { $('company-count').textContent = `共 ${companies().length} 家`; }
+
+function settings() {
+  return {
+    outputBase: $('setting-output-path').value.trim(),
+    siteRetry: Math.max(1, Math.min(10, Number($('site-retry').value) || 5)),
+    captchaRetry: Math.max(1, Math.min(10, Number($('captcha-retry').value) || 5)),
+    randomDelay: $('random-delay').checked
+  };
+}
+
+function saveSettings(silent = false) {
+  const current = settings();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+  $('output-path').value = current.outputBase;
+  if (!silent) toast('设置已保存');
+}
+
+function applySettings(values) {
+  $('setting-output-path').value = values.outputBase || '';
+  $('output-path').value = values.outputBase || '';
+  $('site-retry').value = values.siteRetry || 5;
+  $('captcha-retry').value = values.captchaRetry || 5;
+  $('random-delay').checked = values.randomDelay !== false;
+}
+
+function clearResultRows() {
+  state.rows = [];
+  $('result-rows').innerHTML = '<tr class="empty"><td colspan="6">暂无执行记录</td></tr>';
+}
+
+function appendResultRow(row) {
+  state.rows.push(row);
+  const body = $('result-rows');
+  if (body.querySelector('.empty')) body.innerHTML = '';
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${escapeHtml(row.company)}</td><td>${escapeHtml(row.site)}</td><td>${escapeHtml(row.query)}</td><td><span class="status ${escapeHtml(row.status)}">${escapeHtml(row.status)}</span></td><td>${escapeHtml(row.reason || '')}</td><td>${escapeHtml(row.screenshot || '')}</td>`;
+  body.append(tr);
+}
+
+function appendLog(message, level = '') {
+  const log = $('run-log');
+  if (log.textContent === '等待任务开始。') log.textContent = '';
+  const now = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+  const entry = document.createElement('div');
+  entry.className = `log-entry ${level}`;
+  entry.textContent = `[${now}] ${level === 'error' ? '错误：' : ''}${message}`;
+  log.append(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+function setRunState(text, kind = '') {
+  const element = $('run-state');
+  element.textContent = text;
+  element.className = `task-state ${kind}`;
+}
+
+function setControls() {
+  $('pause-task').disabled = !state.running;
+  $('stop-task').disabled = !state.running;
+  $('pause-task').textContent = state.paused ? '继续' : '暂停';
+}
+
+function resetProgress() {
+  $('progress-fill').style.width = '0%';
+  $('progress-title').textContent = '尚未开始';
+  $('progress-status').textContent = '等待创建任务';
+  setRunState('准备执行', 'running');
+}
+
+async function chooseFolder(target) {
+  const folder = await window.electronAPI?.chooseFolder();
+  if (!folder) return;
+  $(target).value = folder;
+  if (target === 'setting-output-path') {
+    $('output-path').value = folder;
+    saveSettings(true);
+  }
+  inspectResume();
+}
+
+let inspectTimer;
+function inspectResume() {
+  clearTimeout(inspectTimer);
+  inspectTimer = setTimeout(async () => {
+    const project = $('project-name').value.trim();
+    const outputBase = $('output-path').value.trim();
+    if (!project || !outputBase || !window.electronAPI) return;
+    const inspection = await window.electronAPI.inspectTask(outputBase, project);
+    if (!inspection.resumable) {
+      $('resume-notice').classList.add('hidden');
+      return;
+    }
+    const done = inspection.state.completed.length;
+    const total = inspection.state.companies.length * 2;
+    $('resume-copy').textContent = `“${inspection.state.project}”已完成 ${done}/${total} 项。`;
+    $('resume-notice').classList.remove('hidden');
+  }, 250);
+}
+
+async function startTask(mode = {}) {
+  const project = $('project-name').value.trim();
+  const list = companies();
+  const outputBase = $('output-path').value.trim();
+  if (!project) return toast('请填写项目名称');
+  if (!list.length) return toast('请至少输入一家企业');
+  if (list.length > 500) return toast('单批公司数量上限为 500 家');
+  if (!outputBase) return toast('请选择保存路径');
+  saveSettings(true);
+  state.running = true;
+  state.paused = false;
+  state.outputFolder = '';
+  state.reportPath = '';
+  clearResultRows();
+  $('result-summary').textContent = '任务正在执行，明细将实时写入。';
+  $('result-summary').classList.remove('done');
+  $('open-output').disabled = true;
+  $('open-report').disabled = true;
+  $('resume-notice').classList.add('hidden');
+  resetProgress();
+  $('run-log').textContent = '';
+  setControls();
+  showView('progress');
+  let result;
+  try {
+    result = await window.electronAPI.startTask({ project, companies: list, outputBase, settings: settings(), ...mode });
+  } catch (error) {
+    state.running = false;
+    setControls();
+    toast(`任务启动失败：${error.message}`);
+    return;
+  }
+  if (!result?.ok) {
+    state.running = false;
+    setControls();
+    if (result?.resumeAvailable) {
+      inspectResume();
+      toast('发现未完成任务，请选择继续或重新开始');
+    } else toast(result?.message || '任务启动失败');
+  }
+}
+
+async function importCompanies(file) {
+  if (!file) return;
+  try {
+    let names = [];
+    if (/\.xlsx?$|\.xls$/i.test(file.name)) names = await window.electronAPI.parseExcel(await file.arrayBuffer());
+    else names = (await file.text()).replace(/\r/g, '').split(/\n|,/).map((name) => name.trim()).filter(Boolean);
+    $('companies').value = [...new Set(names)].join('\n');
+    $('file-note').textContent = `${file.name} 已读取 ${names.length} 家`;
+    updateCompanyCount();
+  } catch (error) { toast(`导入失败：${error.message}`); }
+}
+
+function handleTaskUpdate(update) {
+  if (update.type === 'started') { state.outputFolder = update.folder; appendLog(update.message); return; }
+  if (update.type === 'log') { appendLog(update.message, update.level); return; }
+  if (update.type === 'paused') { state.paused = true; setRunState('已暂停', 'paused'); appendLog(update.message); setControls(); return; }
+  if (update.type === 'resumed') { state.paused = false; setRunState('运行中', 'running'); appendLog(update.message); setControls(); return; }
+  if (update.type === 'stopping') { appendLog(update.message); return; }
+  if (update.type === 'item') { appendResultRow(update); return; }
+  if (update.type === 'progress') {
+    const percent = Math.round((update.done / Math.max(update.total, 1)) * 100);
+    $('progress-fill').style.width = `${percent}%`;
+    $('progress-title').textContent = `第 ${update.companyIndex}/${update.companyTotal} 家公司，完成 ${update.done}/${update.total} 项`;
+    $('progress-status').textContent = `${update.company} -> ${update.siteName}（${update.query}）：${update.status}`;
+    return;
+  }
+  if (update.type === 'completed') {
+    state.running = false;
+    state.paused = false;
+    state.outputFolder = update.folder;
+    state.reportPath = update.reportPath;
+    setControls();
+    setRunState(update.summary.cancelled ? '任务已取消' : '任务完成');
+    $('result-state').textContent = update.summary.cancelled ? '任务已取消' : '任务完成';
+    $('result-summary').classList.add('done');
+    $('result-summary').textContent = `${update.summary.cancelled ? '任务已取消' : '任务完成'}：成功 ${update.summary.success} 项，无记录 ${update.summary.noRecord} 项，失败 ${update.summary.failed} 项，验证码未通过 ${update.summary.captcha} 项。`;
+    clearResultRows();
+    update.rows.forEach(appendResultRow);
+    $('open-output').disabled = !update.folder;
+    $('open-report').disabled = !update.reportPath;
+    appendLog(update.message);
+    showView('result');
+  }
+}
+
+document.querySelectorAll('.tab').forEach((tab) => tab.addEventListener('click', () => showView(tab.dataset.view)));
+$('companies').addEventListener('input', updateCompanyCount);
+$('clear-companies').addEventListener('click', () => { $('companies').value = ''; updateCompanyCount(); });
+$('company-file').addEventListener('change', (event) => importCompanies(event.target.files[0]));
+$('choose-path').addEventListener('click', () => chooseFolder('output-path'));
+$('choose-setting-path').addEventListener('click', () => chooseFolder('setting-output-path'));
+$('project-name').addEventListener('input', inspectResume);
+$('output-path').addEventListener('change', inspectResume);
+$('start-task').addEventListener('click', () => startTask());
+$('resume-task').addEventListener('click', () => startTask({ resume: true }));
+$('restart-task').addEventListener('click', () => startTask({ restart: true }));
+$('pause-task').addEventListener('click', async () => {
+  if (!state.running) return;
+  state.paused = !state.paused;
+  await (state.paused ? window.electronAPI.pauseTask() : window.electronAPI.resumeTask());
+  setControls();
+});
+$('stop-task').addEventListener('click', async () => { if (state.running) await window.electronAPI.stopTask(); });
+$('open-output').addEventListener('click', () => window.electronAPI.openFolder(state.outputFolder));
+$('open-report').addEventListener('click', () => window.electronAPI.openReport(state.reportPath));
+$('save-settings').addEventListener('click', () => saveSettings());
+window.electronAPI?.onTaskUpdate(handleTaskUpdate);
+
+(async function initialize() {
+  const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+  const defaults = await window.electronAPI?.defaults();
+  applySettings({ outputBase: defaults?.outputBase || '', siteRetry: 5, captchaRetry: 5, randomDelay: true, ...stored });
+  updateCompanyCount();
+  inspectResume();
+}());

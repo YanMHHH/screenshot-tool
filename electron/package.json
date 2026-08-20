@@ -9,6 +9,7 @@
     "package": "electron-builder --dir"
   },
   "dependencies": {
+    "ddddocr": "^1.0.0",
     "pngjs": "^7.0.0",
     "xlsx": "^0.18.5"
   },
@@ -19,7 +20,15 @@
   "build": {
     "appId": "com.jinghe.desktop",
     "productName": "镜核",
-    "directories": { "output": "release" },
-    "files": ["main.js", "preload.js", "../app/**/*", "package.json"]
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "native-session.js",
+      "preload.js",
+      "../app/**/*",
+      "package.json"
+    ]
   }
 }

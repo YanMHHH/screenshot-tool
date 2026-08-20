@@ -5,10 +5,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   pauseTask: () => ipcRenderer.invoke('task:pause'),
   resumeTask: () => ipcRenderer.invoke('task:resume'),
   stopTask: () => ipcRenderer.invoke('task:stop'),
+  inspectTask: (outputBase, project) => ipcRenderer.invoke('task:inspect', outputBase, project),
   parseExcel: (arrayBuffer) => ipcRenderer.invoke('file:parse-excel', arrayBuffer),
-  toggleBrowser: (visible) => ipcRenderer.invoke('browser:toggle', visible),
-  setBrowserBounds: (bounds) => ipcRenderer.invoke('browser:bounds', bounds),
-  openFolder: () => ipcRenderer.invoke('task:open-folder'),
+  chooseFolder: () => ipcRenderer.invoke('dialog:choose-folder'),
+  defaults: () => ipcRenderer.invoke('app:defaults'),
+  openFolder: (folder) => ipcRenderer.invoke('task:open-folder', folder),
+  openReport: (reportPath) => ipcRenderer.invoke('task:open-report', reportPath),
   onTaskUpdate: (callback) => {
     const listener = (_event, update) => callback(update);
     ipcRenderer.on('task:update', listener);
