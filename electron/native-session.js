@@ -142,6 +142,7 @@ class NativeSession {
     this.ws = null;
     this.nextId = 0;
     this.pending = new Map();
+    this.recentResponses = [];
   }
 
   async start(url, { allowUntitledPage = false } = {}) {
@@ -172,6 +173,7 @@ class NativeSession {
     await this.connect(target.webSocketDebuggerUrl);
     await this.command('Page.enable');
     await this.command('Runtime.enable');
+    await this.command('Network.enable');
     this.log('原生浏览器会话已就绪');
   }
 
@@ -217,6 +219,19 @@ class NativeSession {
     });
     this.ws.addEventListener('message', (event) => {
       const message = JSON.parse(String(event.data));
+      if (message.method === 'Network.responseReceived') {
+        const response = message.params?.response;
+        if (response?.url) {
+          this.recentResponses.push({
+            url: response.url,
+            status: response.status,
+            mimeType: response.mimeType || '',
+            type: message.params?.type || '',
+            timestamp: Date.now()
+          });
+          if (this.recentResponses.length > 100) this.recentResponses.splice(0, this.recentResponses.length - 100);
+        }
+      }
       if (!message.id) return;
       const pending = this.pending.get(message.id);
       if (!pending) return;
@@ -245,6 +260,15 @@ class NativeSession {
       throw new Error(detail || '页面脚本执行失败');
     }
     return result.result?.value;
+  }
+
+  async getDiagnostics() {
+    const page = await this.evaluate(() => ({
+      url: location.href,
+      title: document.title,
+      text: (document.body?.innerText || '').replace(/\s+/g, ' ').slice(0, 1200)
+    }));
+    return { page, responses: this.recentResponses.slice(-30) };
   }
 
   async navigate(url) {

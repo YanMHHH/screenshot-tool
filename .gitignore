@@ -27,3 +27,8 @@ electron/.runtime/
 
 # Electron packaged application outputs
 electron/release*/
+
+# License signing material must never be committed or distributed.
+*.pem
+*.key
+*.jinghe-license

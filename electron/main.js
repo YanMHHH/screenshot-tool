@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, clipboard, dialog, ipcMain, shell } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const childProcess = require('node:child_process');
@@ -7,6 +7,7 @@ const XLSX = require('xlsx');
 const DdddOcr = require('ddddocr').default;
 const { PNG } = require('pngjs');
 const { NativeSession, sleep } = require('./native-session');
+const { createLicenseStore, LICENSE_EXTENSION } = require('./license');
 
 const SITE_CATALOG = {
   'W-001': {
@@ -66,13 +67,25 @@ const PCCZ_SELECTORS = {
 const STATE_FILE = 'task_state.json';
 const REPORT_FILE = '执行明细报告.csv';
 
-app.setPath('userData', path.join(__dirname, '.runtime'));
-app.setPath('sessionData', path.join(__dirname, '.runtime', 'session'));
+if (!app.isPackaged) {
+  app.setPath('userData', path.join(__dirname, '.runtime'));
+  app.setPath('sessionData', path.join(__dirname, '.runtime', 'session'));
+}
+const licenseStore = createLicenseStore(app.getPath('userData'));
 let mainWindow;
 let task = null;
 let taskPaused = false;
 let taskStopped = false;
 let ocrPromise = null;
+
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) app.quit();
+
+async function importLicenseFile(filePath) {
+  const result = await licenseStore.importFile(filePath);
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('license:update', result);
+  return result;
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -89,6 +102,15 @@ function sendUpdate(update) {
 }
 
 function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+function retryDelay(attempt) {
+  const base = Math.min(15_000, 1_000 * (2 ** Math.max(0, attempt - 1)));
+  return base + Math.floor(Math.random() * 500);
+}
+async function waitBeforeRetry(notify, attempt, label) {
+  const delay = retryDelay(attempt);
+  notify(`${label}，${Math.ceil(delay / 1000)} 秒后重试`);
+  await wait(delay);
+}
 function getOcr() { if (!ocrPromise) ocrPromise = DdddOcr.create(); return ocrPromise; }
 function safeName(value) { return String(value).replace(/[\\/:*?"<>|]/g, '_').trim(); }
 function itemKey(company, siteCode, query) { return `${company}|${siteCode}|${query}`; }
@@ -460,6 +482,25 @@ async function saveResultArtifact(session, companyDir, siteName, queryName, capt
   return { screenshot: path.join(safeName(company), screenshot), artifactLabel: isPdf ? '网页 PDF 已保存' : '截图已保存', capture };
 }
 
+async function saveSiteDiagnostic(session, folder, company, query, reason, notify) {
+  try {
+    const diagnostic = await session.getDiagnostics();
+    const debugDir = path.join(folder, 'site-debug');
+    await fs.mkdir(debugDir, { recursive: true });
+    const stem = `${safeName(company)}_${safeName(query.name)}_${timestamp()}`;
+    await fs.writeFile(path.join(debugDir, `${stem}.json`), JSON.stringify({
+      timestamp: new Date().toISOString(), company, site: query.name, reason, ...diagnostic
+    }, null, 2), 'utf8');
+    const failures = diagnostic.responses
+      .filter((response) => Number(response.status) >= 400)
+      .map((response) => `${response.status} ${response.url}`)
+      .slice(-3);
+    notify(`站点诊断已保存：site-debug\\${stem}.json${failures.length ? `；最近错误：${failures.join(' | ')}` : ''}`);
+  } catch (error) {
+    notify(`保存站点诊断失败：${error.message}`);
+  }
+}
+
 async function runCreditChinaOne(session, company, query, settings, captureMode, notify, folder) {
   let lastError = '';
   for (let attempt = 1; attempt <= settings.siteRetry; attempt += 1) {
@@ -485,7 +526,7 @@ async function runCreditChinaOne(session, company, query, settings, captureMode,
     } catch (error) {
       if (taskStopped) throw error;
       lastError = error.message;
-      notify(`查询异常：${lastError}${attempt < settings.siteRetry ? '，正在重试' : ''}`);
+      if (attempt < settings.siteRetry) await waitBeforeRetry(notify, attempt, `查询异常：${lastError}`);
     }
   }
   return { status: '失败', reason: lastError || '查询失败' };
@@ -740,7 +781,7 @@ async function runCcgpgOne(session, company, query, settings, captureMode, notif
     } catch (error) {
       if (taskStopped) throw error;
       lastError = error.message;
-      notify(`中国政府采购网查询异常：${lastError}${attempt < settings.siteRetry ? '，正在重试' : ''}`);
+      if (attempt < settings.siteRetry) await waitBeforeRetry(notify, attempt, `中国政府采购网查询异常：${lastError}`);
     }
   }
   return { status: '失败', reason: lastError || '中国政府采购网查询失败' };
@@ -783,13 +824,14 @@ async function selectPlapList(session, listCode, timeoutMs = 70000) {
       return {
         selected: Boolean(card?.classList.contains('actived')),
         loading: Boolean(loading && getComputedStyle(loading).display !== 'none'),
-        rows: list?.querySelectorAll('li').length || 0,
+        rows: [...(list?.querySelectorAll('li') || [])].filter((row) => row.innerText.trim()).length,
+        noRecord: /没有查询到相关记录|没有找到相关结果|暂无数据/.test(text),
         failed: /加载失败|查询接口超时/.test(text),
         text: text.slice(0, 300)
       };
     }, { code: listCode, selectors: PLAP_PUNISH_SELECTORS });
-    if (latest.failed) return { ok: false, reason: `军队采购${listCode === 'suspend' ? '暂停' : '失信'}名单加载失败：${latest.text.replace(/\s+/g, ' ').slice(0, 120)}` };
-    if (latest.selected && !latest.loading && latest.rows > 0) return { ok: true };
+    if (latest.failed) return { ok: false, kind: 'site_error', reason: `军队采购${listCode === 'suspend' ? '暂停' : '失信'}名单加载失败：${latest.text.replace(/\s+/g, ' ').slice(0, 120)}` };
+    if (latest.selected && !latest.loading && (latest.rows > 0 || latest.noRecord)) return { ok: true };
     await sleep(500);
   }
   return { ok: false, reason: `军队采购${listCode === 'suspend' ? '暂停' : '失信'}名单默认列表加载超时` };
@@ -823,7 +865,7 @@ async function waitForPlapResult(session, company, timeoutMs = 70000) {
         inputMatches: field?.value === value,
         loading: Boolean(loading && getComputedStyle(loading).display !== 'none'),
         rows,
-        noRecord: /没有查询到相关记录|暂无数据/.test(text),
+        noRecord: /没有查询到相关记录|没有找到相关结果|暂无数据/.test(text),
         failed: /加载失败|查询接口超时/.test(text),
         companyPresent: text.includes(value),
         text: text.slice(0, 400)
@@ -866,7 +908,8 @@ async function runPlapPunishOne(session, company, query, settings, captureMode, 
     } catch (error) {
       if (taskStopped) throw error;
       lastError = error.message;
-      notify(`军队采购网${listName}查询异常：${lastError}${attempt < settings.siteRetry ? '，正在重试' : ''}`);
+      await saveSiteDiagnostic(session, folder, company, query, lastError, notify);
+      if (attempt < settings.siteRetry) await waitBeforeRetry(notify, attempt, `军队采购网${listName}查询异常：${lastError}`);
     }
   }
   return { status: '失败', reason: lastError || `军队采购网${listName}查询失败` };
@@ -953,7 +996,8 @@ async function runPcczOne(session, company, query, settings, captureMode, notify
     } catch (error) {
       if (taskStopped) throw error;
       lastError = error.message;
-      notify(`全国企业破产重整案件信息网查询异常：${lastError}${attempt < settings.siteRetry ? '，正在重试' : ''}`);
+      await saveSiteDiagnostic(session, folder, company, query, lastError, notify);
+      if (attempt < settings.siteRetry) await waitBeforeRetry(notify, attempt, `全国企业破产重整案件信息网查询异常：${lastError}`);
     }
   }
   return { status: '失败', reason: lastError || '全国企业破产重整案件信息网查询失败' };
@@ -974,7 +1018,7 @@ async function runOne(session, company, query, settings, captureMode, notify, fo
         if (taskStopped) throw error;
         lastResult = { status: '失败', reason: error.message };
       }
-      if (attempt < settings.siteRetry) notify(`中国执行信息公开网查询异常：${lastResult.reason || lastResult.status}，正在进行第 ${attempt + 1}/${settings.siteRetry} 次站点重试`);
+      if (attempt < settings.siteRetry) await waitBeforeRetry(notify, attempt, `中国执行信息公开网查询异常：${lastResult.reason || lastResult.status}`);
     }
     return lastResult || { status: '失败', reason: '中国执行信息公开网查询失败' };
   }
@@ -1040,6 +1084,8 @@ async function runTask(input) {
 
 ipcMain.handle('task:start', async (_event, payload) => {
   if (task?.running) return { ok: false, message: '已有任务正在运行' };
+  const license = await licenseStore.status();
+  if (!license.active) return { ok: false, licenseRequired: true, message: license.message };
   const project = safeName(payload.project || '未命名任务');
   const companies = [...new Set((payload.companies || []).map((name) => String(name).trim()).filter(Boolean))].slice(0, 500);
   const siteCodes = normalizeSiteCodes(payload.siteCodes);
@@ -1071,11 +1117,34 @@ ipcMain.handle('task:open-folder', async (_event, folder) => { const target = fo
 ipcMain.handle('task:open-report', async (_event, reportPath) => { if (reportPath) await shell.openPath(reportPath); return { ok: true }; });
 ipcMain.handle('dialog:choose-folder', async () => { const result = await dialog.showOpenDialog(mainWindow, { properties: ['openDirectory', 'createDirectory'] }); return result.canceled ? null : result.filePaths[0]; });
 ipcMain.handle('app:defaults', () => ({ outputBase: app.getPath('desktop') }));
+ipcMain.handle('license:status', () => licenseStore.status());
+ipcMain.handle('license:get-authorization', async () => ({ machineCode: await licenseStore.getMachineCode() }));
+ipcMain.handle('license:copy-authorization', async () => {
+  const machineCode = await licenseStore.getMachineCode();
+  clipboard.writeText(machineCode);
+  return { machineCode };
+});
+ipcMain.handle('license:import', async () => {
+  const selected = await dialog.showOpenDialog(mainWindow, {
+    title: '选择授权文件',
+    properties: ['openFile'],
+    filters: [{ name: '镜核授权文件', extensions: [LICENSE_EXTENSION.slice(1)] }]
+  });
+  if (selected.canceled || !selected.filePaths[0]) return { cancelled: true };
+  return importLicenseFile(selected.filePaths[0]);
+});
 ipcMain.handle('file:parse-excel', (_event, arrayBuffer) => {
   const workbook = XLSX.read(Buffer.from(arrayBuffer));
   const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
   return XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' }).map((row) => String(row[0] || '').trim()).filter(Boolean).slice(0, 500);
 });
 
-app.whenReady().then(() => { createWindow(); app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); }); });
+app.on('second-instance', () => {
+  if (mainWindow) { if (mainWindow.isMinimized()) mainWindow.restore(); mainWindow.focus(); }
+});
+
+app.whenReady().then(() => {
+  createWindow();
+  app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
+});
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });

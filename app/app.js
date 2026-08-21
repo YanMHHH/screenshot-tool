@@ -1,6 +1,6 @@
 const $ = (id) => document.getElementById(id);
 const STORAGE_KEY = 'capture-tool-settings-v1';
-const state = { running: false, paused: false, outputFolder: '', reportPath: '', rows: [] };
+const state = { running: false, paused: false, outputFolder: '', reportPath: '', rows: [], license: null };
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' })[char]);
@@ -181,8 +181,65 @@ async function startTask(mode = {}) {
     if (result?.resumeAvailable) {
       inspectResume();
       toast('发现未完成任务，请选择继续或重新开始');
-    } else toast(result?.message || '任务启动失败');
+    } else {
+      if (result?.licenseRequired) { showView('settings'); refreshLicense(); }
+      toast(result?.message || '任务启动失败');
+    }
   }
+}
+
+function renderLicense(license) {
+  state.license = license;
+  const active = Boolean(license?.active);
+  const badge = $('license-badge');
+  const status = $('license-status');
+  const details = $('license-details');
+  const actions = $('authorization-actions');
+  $('license-header-state').textContent = active ? '本地运行 · 已激活' : '本地运行 · 未激活';
+  badge.textContent = active ? '已激活' : '未激活';
+  badge.className = `license-badge ${active ? 'active' : 'inactive'}`;
+  status.textContent = license?.message || '尚未激活';
+  status.className = `license-status ${active ? 'active' : ''}`;
+  if (active && license.license) {
+    const expiry = license.license.expiresAt || '长期有效';
+    details.innerHTML = `<span>授权给：<strong>${escapeHtml(license.license.issuedTo)}</strong></span><span>授权编号：${escapeHtml(license.license.licenseId)}</span><span>有效至：${escapeHtml(expiry)}</span>`;
+    details.classList.remove('hidden');
+    actions.classList.add('hidden');
+  } else {
+    details.classList.add('hidden');
+    actions.classList.remove('hidden');
+  }
+}
+
+async function refreshLicense() {
+  try { renderLicense(await window.electronAPI?.licenseStatus()); }
+  catch (_) { renderLicense({ active: false, message: '无法读取授权状态' }); }
+}
+
+async function getAuthorization() {
+  try {
+    const result = await window.electronAPI.getAuthorizationRequest();
+    $('authorization-code').value = result.machineCode;
+    $('copy-authorization').disabled = false;
+  } catch (error) { toast(`获取授权码失败：${error.message}`); }
+}
+
+async function copyAuthorization() {
+  try {
+    const result = await window.electronAPI.copyAuthorizationRequest();
+    $('authorization-code').value = result.machineCode;
+    $('copy-authorization').disabled = false;
+    toast('授权码已复制，请发送给管理员');
+  } catch (error) { toast(`复制失败：${error.message}`); }
+}
+
+async function importLicense() {
+  try {
+    const result = await window.electronAPI.importLicense();
+    if (result?.cancelled) return;
+    if (result?.active) { toast('授权已完成'); refreshLicense(); }
+    else toast(result?.message || '授权文件无法使用');
+  } catch (error) { toast(`导入失败：${error.message}`); }
 }
 
 async function importCompanies(file) {
@@ -252,7 +309,15 @@ $('stop-task').addEventListener('click', async () => { if (state.running) await 
 $('open-output').addEventListener('click', () => window.electronAPI.openFolder(state.outputFolder));
 $('open-report').addEventListener('click', () => window.electronAPI.openReport(state.reportPath));
 $('save-settings').addEventListener('click', () => saveSettings());
+$('get-authorization').addEventListener('click', getAuthorization);
+$('copy-authorization').addEventListener('click', copyAuthorization);
+$('import-license').addEventListener('click', importLicense);
 window.electronAPI?.onTaskUpdate(handleTaskUpdate);
+window.electronAPI?.onLicenseUpdate((result) => {
+  if (result?.active) toast('授权文件已导入');
+  else if (result?.message) toast(result.message);
+  refreshLicense();
+});
 
 (async function initialize() {
   const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
@@ -260,4 +325,5 @@ window.electronAPI?.onTaskUpdate(handleTaskUpdate);
   applySettings({ outputBase: defaults?.outputBase || '', siteRetry: 5, captchaRetry: 5, randomDelay: true, captureMode: 'png', ...stored });
   updateCompanyCount();
   inspectResume();
+  refreshLicense();
 }());

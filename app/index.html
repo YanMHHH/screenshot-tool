@@ -10,7 +10,7 @@
     <main class="workspace">
       <header class="app-header">
         <div class="brand"><span class="brand-mark">核</span><div><strong>企业信用截图工具</strong><small>本地证据留存工作台</small></div></div>
-        <div class="local-state"><i></i>本地运行</div>
+        <div class="local-state"><i></i><span id="license-header-state">本地运行</span></div>
       </header>
 
       <nav class="tabs" aria-label="工作区导航">
@@ -76,7 +76,16 @@
           <label class="field compact"><span>验证码重试次数</span><input id="captcha-retry" type="number" min="1" max="10" /></label>
           <label class="toggle"><input id="random-delay" type="checkbox" /><span></span>请求间随机延迟 1 至 3 秒</label>
         </section>
-        <section class="panel license-panel"><h2>License</h2><p>开发版（未激活）</p><small>本应用不会上传企业名单、截图或执行报告。</small></section>
+        <section class="panel license-panel">
+          <div class="license-heading"><div><h2>软件授权</h2><p id="license-status" class="license-status">正在读取授权状态...</p></div><span id="license-badge" class="license-badge">检查中</span></div>
+          <div id="license-details" class="license-details hidden"></div>
+          <div id="authorization-actions" class="authorization-actions">
+            <div class="authorization-copy"><label class="field"><span>授权申请码</span><input id="authorization-code" readonly placeholder="点击“获取授权”后自动生成" /></label><div class="authorization-buttons"><button class="button outline" id="get-authorization">获取授权</button><button class="button primary" id="copy-authorization" disabled>复制授权码</button></div></div>
+            <p>将授权申请码发送给管理员。收到授权文件后，点击下方"导入授权文件"完成激活。</p>
+          </div>
+          <div class="license-import"><button class="button quiet" id="import-license">导入授权文件</button></div>
+          <small class="license-privacy">本应用不会上传企业名单、截图或执行报告。</small>
+        </section>
         <div class="submit-line"><span></span><button class="button primary" id="save-settings">保存设置</button></div>
       </section>
     </main>

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>镜核授权签发工具</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, "Microsoft YaHei", sans-serif; font-size: 14px; background: #f2f5f3; color: #1a1a1a; padding: 24px; }
+    h1 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+    .subtitle { color: #666; font-size: 13px; margin-bottom: 20px; }
+    .panel { background: #fff; border: 1px solid #dde5e0; border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+    .panel h2 { font-size: 13px; font-weight: 600; color: #444; margin-bottom: 14px; text-transform: uppercase; letter-spacing: .04em; }
+    .key-bar { display: flex; align-items: center; gap: 10px; }
+    .key-path { flex: 1; font-size: 12px; color: #666; background: #f7f9f8; border: 1px solid #dde5e0; border-radius: 5px; padding: 6px 10px; min-height: 32px; word-break: break-all; }
+    .key-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 500; }
+    .key-badge.ok { background: #e6f4ec; color: #1a7a3e; }
+    .key-badge.none { background: #fef3e2; color: #b35e00; }
+    .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+    label span { font-size: 13px; color: #444; font-weight: 500; }
+    label span b { color: #c0392b; font-weight: 400; margin-left: 2px; }
+    input, textarea { width: 100%; border: 1px solid #ccd6cf; border-radius: 5px; padding: 7px 10px; font-size: 14px; font-family: inherit; background: #fff; outline: none; transition: border-color .15s; }
+    input:focus, textarea:focus { border-color: #2e7d52; }
+    textarea { resize: vertical; min-height: 60px; font-family: monospace; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+    button { padding: 8px 18px; border: none; border-radius: 6px; font-size: 14px; font-family: inherit; cursor: pointer; transition: opacity .15s; }
+    button:disabled { opacity: .45; cursor: default; }
+    .btn-primary { background: #2e7d52; color: #fff; font-weight: 500; }
+    .btn-primary:not(:disabled):hover { background: #256644; }
+    .btn-outline { background: #fff; color: #2e7d52; border: 1px solid #2e7d52; }
+    .btn-outline:not(:disabled):hover { background: #f0f8f4; }
+    .result-box { background: #f7f9f8; border: 1px solid #dde5e0; border-radius: 5px; padding: 12px; font-size: 12px; font-family: monospace; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto; color: #333; }
+    .msg { padding: 8px 12px; border-radius: 5px; font-size: 13px; margin-top: 10px; }
+    .msg.ok { background: #e6f4ec; color: #1a7a3e; }
+    .msg.err { background: #fdecea; color: #b71c1c; }
+    .msg.hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>镜核授权签发工具</h1>
+  <p class="subtitle">填写授权信息，生成并保存 .jinghe-license 授权文件。</p>
+
+  <div class="panel">
+    <h2>私钥</h2>
+    <div class="key-bar">
+      <div class="key-path" id="key-path">未加载</div>
+      <span class="key-badge none" id="key-badge">未加载</span>
+      <button class="btn-outline" id="load-key">加载私钥</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>授权信息</h2>
+    <label class="field"><span>授权申请码 <b>*</b></span><textarea id="machine-code" placeholder="JH1-XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX" rows="2"></textarea></label>
+    <label class="field"><span>客户名称 <b>*</b></span><input id="issued-to" placeholder="例如：某某有限公司" /></label>
+    <div class="row2">
+      <label class="field"><span>授权开始日 <b>*</b></span><input id="issued-at" type="date" /></label>
+      <label class="field"><span>到期日 <b>*</b></span><input id="expires-at" type="date" /></label>
+    </div>
+    <div class="actions">
+      <button class="btn-primary" id="issue-btn" disabled>签发并保存授权文件</button>
+    </div>
+    <div class="msg hidden" id="msg"></div>
+  </div>
+
+  <div class="panel" id="preview-panel" style="display:none">
+    <h2>授权文件预览</h2>
+    <div class="result-box" id="result-box"></div>
+  </div>
+
+  <script>
+    const api = window.signerAPI;
+    let keyLoaded = false;
+
+    function todayStr() {
+      const d = new Date();
+      const offset = d.getTimezoneOffset() * 60000;
+      return new Date(d.getTime() - offset).toISOString().slice(0, 10);
+    }
+
+    function setMsg(text, type) {
+      const el = document.getElementById('msg');
+      el.textContent = text;
+      el.className = `msg ${type}`;
+    }
+
+    function clearMsg() {
+      const el = document.getElementById('msg');
+      el.className = 'msg hidden';
+    }
+
+    function updateIssueBtn() {
+      document.getElementById('issue-btn').disabled = !keyLoaded;
+    }
+
+    document.getElementById('issued-at').value = todayStr();
+
+    document.getElementById('load-key').addEventListener('click', async () => {
+      const result = await api.loadPrivateKey();
+      if (result.ok) {
+        keyLoaded = true;
+        document.getElementById('key-path').textContent = result.path;
+        const badge = document.getElementById('key-badge');
+        badge.textContent = '已加载';
+        badge.className = 'key-badge ok';
+        clearMsg();
+      } else {
+        setMsg(result.message || '私钥加载失败', 'err');
+      }
+      updateIssueBtn();
+    });
+
+    document.getElementById('issue-btn').addEventListener('click', async () => {
+      clearMsg();
+      const machineCode = document.getElementById('machine-code').value.trim().toUpperCase();
+      const issuedTo = document.getElementById('issued-to').value.trim();
+      const issuedAt = document.getElementById('issued-at').value;
+      const expiresAt = document.getElementById('expires-at').value;
+
+      if (!machineCode) return setMsg('请填写授权申请码', 'err');
+      if (!issuedTo) return setMsg('请填写客户名称', 'err');
+      if (!expiresAt) return setMsg('请选择到期日', 'err');
+
+      const issueResult = await api.issueLicense({ machineCode, issuedTo, issuedAt, expiresAt });
+      if (!issueResult.ok) return setMsg(issueResult.message, 'err');
+
+      const license = issueResult.license;
+      const content = JSON.stringify(license, null, 2) + '\n';
+      const filename = `${license.licenseId}.jinghe-license`;
+
+      document.getElementById('preview-panel').style.display = '';
+      document.getElementById('result-box').textContent = content;
+
+      const saveResult = await api.saveFile(filename, content);
+      if (saveResult.cancelled) return;
+      if (!saveResult.ok) return setMsg('文件保存失败', 'err');
+      setMsg(`已保存：${saveResult.path}`, 'ok');
+    });
+
+    // 启动时自动尝试加载默认路径私钥
+    (async () => {
+      const result = await api.loadPrivateKey();
+      if (result.ok) {
+        keyLoaded = true;
+        document.getElementById('key-path').textContent = result.path;
+        const badge = document.getElementById('key-badge');
+        badge.textContent = '已加载';
+        badge.className = 'key-badge ok';
+        updateIssueBtn();
+      }
+    })();
+  </script>
+</body>
+</html>

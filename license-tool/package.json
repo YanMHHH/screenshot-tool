@@ -1,36 +1,28 @@
 {
-  "name": "jinghe-desktop",
-  "version": "0.1.0",
-  "description": "镜核企业资质核查桌面应用",
+  "name": "jinghe-license-tool",
+  "version": "1.0.0",
+  "description": "镜核授权签发工具",
   "main": "main.js",
   "scripts": {
-    "dev": "electron .",
-    "start": "electron .",
+    "start": "set ELECTRON_RUN_AS_NODE=&& electron .",
     "package": "electron-builder --win nsis",
     "package:dir": "electron-builder --dir"
-  },
-  "dependencies": {
-    "ddddocr": "^1.0.0",
-    "pngjs": "^7.0.0",
-    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "electron": "^36.3.2",
     "electron-builder": "^26.0.12"
   },
   "build": {
-    "appId": "com.jinghe.desktop",
-    "productName": "镜核",
+    "appId": "com.jinghe.license-tool",
+    "productName": "镜核授权签发工具",
     "directories": {
       "output": "release"
     },
     "files": [
       "main.js",
-      "native-session.js",
-      "license.js",
-      "license-public-key.js",
       "preload.js",
-      "../app/**/*",
+      "index.html",
+      "signer.js",
       "package.json"
     ],
     "nsis": {
