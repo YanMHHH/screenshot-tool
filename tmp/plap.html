@@ -1,0 +1,1713 @@
+<!--供应商产品类型目录接口-->
+<input id="supplierCatalog" type="hidden" value="https://www.plap.mil.cn/gateway/gpbs-supplier/v1/supplier/purCatalogDict/query/tree/three" xmlns="http://www.w3.org/1999/html">
+<input id="loginUrl" type="hidden" value="https://www.plap.mil.cn/gateway/gp-auth-center/login?tenantId=Cxiangmu-001&redirectUrl=">
+
+<input id="productType" type="hidden" value="productTagJD">
+<!--  head -->
+
+<!-- 站点的首页模板，不可删除 -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="viewport" content="width=1226">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel='shortcut icon' href='/freecms-glht/site/juncai/resources/img/ico.ico' type='image/x-icon' />
+            <title>
+                军队采购网
+            </title>
+    <link rel="stylesheet" type="text/css" href="/freecms-glht/site/juncai/resources/style/reset.css">
+    <link rel="stylesheet" type="text/css" href="/freecms-glht/site/juncai/resources/style/main.css">
+    <link rel="stylesheet" type="text/css" href="/freecms-glht/site/juncai/resources/style/dynamic.css">
+    <link rel="stylesheet" type="text/css" href="/freecms-glht/site/juncai/resources/style/governmentInfo.css">
+    <link rel="stylesheet" type="text/css" href="/freecms-glht/site/juncai/resources/style/news.css">
+    <link rel="stylesheet" type="text/css" href="/freecms-glht/site/juncai/resources/style/notice.css">
+    <link rel="stylesheet" type="text/css" href="/freecms-glht/site/juncai/resources/style/searchList.css">
+    <link rel="stylesheet" type="text/css" href="/freecms-glht/site/juncai/resources/style/jquery.datetimepicker.css">
+    <link rel="stylesheet" type="text/css" href="/freecms-glht/site/juncai/resources/style/myPagination.css">
+    <link rel="stylesheet" type="text/css" href="/freecms-glht/site/juncai/resources/style/laydate.css">
+    <link rel="stylesheet" type="text/css" href="/freecms-glht/site/juncai/resources/layui/css/layui.css"/>
+    <link rel="stylesheet" type="text/css"  href="/freecms-glht/site/juncai/resources/style/dljg.css"/>
+    <script type="text/javascript" src="/freecms-glht/site/juncai//resources/js/download.js"></script>
+    <link rel="stylesheet" href="/freecms-glht/site/juncai/resources/icon/iconfont.css" />
+    <link rel="stylesheet" href="/freecms-glht/site/juncai/resources/cdn/swiper-5.4.5/package/css/swiper.min.css">
+    <link rel="stylesheet" href="/freecms-glht/site/juncai/resources/module/zTreeSelectM/zTreeSelectM.css">
+    <link rel="stylesheet" href="/freecms-glht/site/juncai/resources/module/zTreeSelectM/zTree_v3/css/zTreeStyle/zTreeStyle.css">
+    <script src="/freecms-glht/site/juncai/resources/js/jquery.min.js"></script>
+    <!--    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>-->
+    <script type="text/javascript" src="/freecms-glht/site/juncai/resources/js/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/freecms-glht/site/juncai/resources/js/jquery.session.js"></script>
+    <script src="/freecms-glht/site/juncai/resources/icon/iconfont.js"></script>
+    <!--<script src="/freecms-glht/site/juncai/resources/cdn/echarts/echarts.min.js"></script>-->
+    <!--<script src="https://cdn.bootcss.com/echarts/4.2.1-rc1/echarts.min.js"></script>-->
+    <script src="/freecms-glht/site/juncai/resources/cdn/swiper-5.4.5/package/js/swiper.min.js"></script>
+    <script type="text/javascript" src="/freecms-glht/site/juncai//resources/js/index.js"></script>
+    <script src="/freecms-glht/site/juncai/resources/js/main.js"></script>
+    <script src="/freecms-glht/site/juncai/resources/js/jquery.datetimepicker.min.js"></script>
+    <script src="/freecms-glht/site/juncai/resources/js/jquery.datetimepicker.full.min.js"></script>
+    <script src="/freecms-glht/site/juncai/resources/js/myPagination.js"></script>
+    <script src="/freecms-glht/site/juncai/resources/js/laydate.js"></script>
+    <script type="text/javascript" src="/freecms-glht/site/juncai/resources/layui/layui.js"></script>
+    <script type="text/javascript" src="/freecms-glht/site/juncai/resources/js/jquery.float-ad.js"></script>
+    <!--引入加密算法js文件-->
+    <script type="text/javascript" src="/freecms-glht/site/juncai//resources/js/jsencrypt.min.js"></script>
+    <script type="text/javascript" src="/freecms-glht/site/juncai//resources/js/publicMethods.js"></script>
+    <script type="text/javascript" src="/freecms-glht/site/juncai//resources/module/zTreeSelectM/zTree_v3/js/jquery.ztree.all.min.js"></script>
+</head>
+<body>
+<div style="background: #EEF2F6;height: 24px;line-height: 24px">
+    <div class="login" style="width: 1200px;margin: 0 auto;">
+                <div class="pleaseLogin" style="display: block">
+                    你好，欢迎来到军队采购网！
+                    <a class="loginA" href="" target="_self" style="color: #1592FF">【请登录】</a>
+                </div>
+        <div class="logoutLine" style="display: none">
+            <div class="logout"><span class="username"></span>,<a class="gztA" href="" style="color: #1592FF">【进入工作台】</a><a class="logoutA" href="" style="color: #1592FF">【退出登录】</a></div>
+        </div>
+    </div>
+</div>
+<div>
+    <!--    <div id="rotationChartMin" class="swiper-container" style="width:100%;height: 220px;">-->
+    <!--        <div class="headlogoMin">-->
+    <!--            -->
+    <!--            -->
+    <!--            <div class="swiper-slide" style="background: url('/freecms-glht/upload/404bb030-5be9-4070-85bd-c94b1473e8de/94a53951-ace4-49fd-a818-1482794d2715.png') no-repeat center 0px; background-size: cover;background-size: 1440px 220px;height: 220px;">-->
+    <!--            </div>-->
+    <!--            -->
+    <!--            -->
+    <!--        </div>-->
+    <!--    </div>-->
+    <div id="rotationChartMax" class="swiper-container" style="width:100%;height: 160px;background-image:url('/freecms-glht/site/juncai/resources/img/bannerbglan.png');background-size: 100% 100% ">
+
+        <img src="/freecms-glht/site/juncai/resources/img/banner-greatwall.png" alt="" style="height: 160px;position: absolute;left: 0">
+
+
+    </div>
+</div>
+
+
+
+<div style="width: 1200px;margin: 0 auto;">
+    <div style="z-index: 9999; width: 1200px; position: absolute;  margin-top: -161px;">
+        <div class="logo float_l" style="margin-top: 36px;">
+                <img src="/freecms-glht/upload/404bb030-5be9-4070-85bd-c94b1473e8de/f9dc34b7-b2bb-4db5-b2b0-66987a577f2d.png" alt="" style="float: left;">
+            <!--<img src="/freecms-glht/site/juncai/resources/img/logotop.png" alt="" style="float: left">-->
+        </div>
+            <div style="float: left;transform: translate(230px, 64px);position: relative;z-index: -99">
+            <img src="/freecms-glht/site/juncai/resources/img/333.png" alt="">
+        </div>
+        <div class="select">
+            <input type="hidden" name="siteid" value="404bb030-5be9-4070-85bd-c94b1473e8de">
+            <input type="hidden" name="templetPath" value="searchList.html">
+            <input type="text" name="key" id="title" class="searchValue"  placeholder="输入查询内容">
+                <a id="megaloscopeHref" href="/freecms-glht/site/juncai/qwjsy/index.html" target="_self">
+                    <input id="megaloscopeBtn" type="submit" class="submit" style="color: #fff; cursor: pointer;"value="搜索" />
+                </a>
+        </div>
+</div>
+</div>
+</div>
+<input id="yjym" type="hidden" value="https://www.plap.mil.cn">
+<input id="tokenGetName" type="hidden" value="https://www.plap.mil.cn/gateway/gp-auth-center/rest/v1/user/userInfo">
+<input id="loginUrl" type="hidden" value="https://www.plap.mil.cn/gateway/gp-auth-center/login?tenantId=Cxiangmu-001&redirectUrl=">
+<input id="logoutUrl" type="hidden" value="https://www.plap.mil.cn/gateway/api/oauth/logout?&logoutRedirectUrl=">
+<input id="gztUrl" type="hidden" value="https://www.plap.mil.cn/all-portal/portal/#/purchasingSupplier">
+<input id="gztUrl" type="hidden" value="https://www.plap.mil.cn/gateway/gpc-gpcms/rest/v2/punish/public?&publishType=suspend">
+<script>
+    $(document).ready(function () {
+        var token = $.cookie("access_token")
+        var locationHref = window.location.href
+        var locationProtocol= window.location.protocol
+        var locationHost = window.location.host
+        var locationUrl = $('#yjym').val() + locationHref.replace(locationProtocol + '//' + locationHost,"")
+        var loginUrl = $('#loginUrl').val()
+        var logoutUrl = $('#logoutUrl').val()
+        var gztUrl = $('#gztUrl').val()
+        $('.loginA').attr('href',loginUrl+locationUrl)
+        $('.logoutA').attr('href',logoutUrl+locationUrl)
+        $('.gztA').attr('href',gztUrl)
+
+        var username;
+        if ($.cookie("access_token"))  {
+            $('.logoutLine').show()
+            $('.pleaseLogin').hide()
+            $.ajax({
+                type: 'GET',
+                url: $('#tokenGetName').val(),
+                contentType: "application/json;charset=utf-8",
+                headers: {'access_token': token},
+                async:true,
+                success: function (res) {
+                    username = res.data.userAccount
+                    $('.username').append(username)
+                }
+            })
+        }else {
+            $('.logoutLine').hide()
+            $('.pleaseLogin').show()
+        }
+    })
+    if($.cookie('regionFullName')){
+        $('#region').empty();
+        if($.cookie('regionFullName') === '省本级') {
+            $('#region').append('黑龙江');
+        }else{
+            $('#region').append($.cookie('regionFullName'));
+        }
+    }
+    // $(document).ready(function () {
+    //     //  * 轮播图
+    //     var rotationChartMin = new Swiper('#rotationChartMin', {
+    //         pagination: {
+    //             el: '.swiper-pagination'
+    //         },
+    //         paginationClickable:true,
+    //         loop: true,
+    //         autoplay: {
+    //             delay: 36000,//1秒切换一次
+    //         },
+    //         // autoplay: true,//可选选项，自动滑动
+    //         clickable :true,
+    //         // navigation: {
+    //         //     nextEl: '.prev',
+    //         //     prevEl: '.next'
+    //         // },
+    //         navigation: {
+    //             nextEl: '.swiper-button-next',
+    //             prevEl: '.swiper-button-prev',
+    //         },
+    //     });
+    //     var rotationChartMax = new Swiper('#rotationChartMax', {
+    //         pagination: {
+    //             el: '.swiper-pagination'
+    //         },
+    //         paginationClickable:true,
+    //         loop: true,
+    //         autoplay: {
+    //             delay: 36000,//1秒切换一次
+    //         },
+    //         // autoplay: true,//可选选项，自动滑动
+    //         clickable :true,
+    //         // navigation: {
+    //         //     nextEl: '.prev',
+    //         //     prevEl: '.next'
+    //         // },
+    //         navigation: {
+    //             nextEl: '.swiper-button-next',
+    //             prevEl: '.swiper-button-prev',
+    //         },
+    //     });
+    // })
+    //搜索按钮隐藏
+    function init() {
+        var str = window.location.pathname;
+        if(str.indexOf("qwjsy")!=-1) {
+            $(".select").remove();
+        }
+    };
+    init();
+    //点击搜索按钮
+    $('#megaloscopeBtn').click(function () {
+        var title = $('#title').val();
+        var megaloscopeHref = $('#megaloscopeHref').attr('href');
+        if(title) {
+            $('#megaloscopeHref').attr('href', encodeURI(megaloscopeHref + '?searchContent=' + title));
+        }
+    })
+</script>
+<style>
+    .logo div p {
+        line-height: 45px;
+        color: #3a89fe;
+        letter-spacing: 7px;
+        font-weight: 600;
+        text-shadow: -2px 0 white, 0 2px white, 2px 0 white, 0 -2px white;
+    }
+</style>
+</body>
+</html>
+<!-- nav -->
+<nav class="classNav">
+    <ul class="nav-tab">
+        <a href="/freecms-glht/site/juncai/index.html">
+            <li><span>首页</span></li>
+        </a>
+        <a href="/freecms-glht/site/juncai/zhdt/index.html" target="_blank">
+            <li><span>综合动态</span></li>
+        </a>
+        <a href="/freecms-glht/site/juncai/cggg/index.html" target="_blank">
+            <li><span>采购大厅</span></li>
+        </a>
+        <a href="/freecms-glht/site/juncai/fwdt/index.html" target="_blank">
+            <li><span>服务大厅</span></li>
+        </a>
+        <a href="/freecms-glht/site/juncai/zcfg/index.html" target="_blank">
+            <li><span>政策法规</span></li>
+        </a>
+        <a href="/freecms-glht/site/juncai/jdjc/index.html" target="_blank">
+            <li><span>监督管理</span></li>
+        </a>
+        <a href="/freecms-glht/site/juncai/pxkh/index.html" target="_blank">
+            <li><span>培训考核</span></li>
+        </a>
+    </ul>
+</nav>
+<!-- nav -->
+<script>
+    $(document).ready(function () {
+        // 获取当前相对路径： /springmvc/page/frame/test.html
+        var pathName = window.location.pathname;
+        function getCaption(obj){
+            var index=obj.indexOf("\/");
+            obj=obj.substring(index+1,obj.length);
+            return obj;
+        }
+        var aList =  $(".nav-tab a")
+        var liList =  $(".nav-tab li span:first-child")
+        var navUrl = ''
+
+        //添加判断：url路径是域名，则设置第一个元素增加bg-active
+        if(pathName === "/"){
+            liList.eq(0).addClass('bg-active').siblings().removeClass('bg-active');
+        } else {
+            for (var i = 0;i<aList.length;i++){
+                var arrUrl = aList[i]["href"].split("//")[1];
+                navUrl = '/'+getCaption(arrUrl);
+                if(navUrl == pathName){
+                    liList.eq(i).addClass('bg-active').siblings().removeClass('bg-active');
+                }
+                if(arrUrl.indexOf("site")>=0){
+                    aList[i].target = '_self'
+                }else{
+                    aList[i].target = '_blank'
+                }
+            }
+        }
+
+    })
+</script>
+<section class="content">
+    <div class="container">
+        <!-- 內容 -->
+        <div class="cggg-content clearfix newColumn" style="height:auto;">
+            <div class="float_r notice-content procurementAnnouncementContent" style="width: 1200px;">
+                <div class="sonChannel" style="width: 345px;height: 133px;float: left;margin-bottom: 20px;background: #FFFFFF;box-shadow: 0 0 8px 0 rgba(17,80,225,0.20);border-radius: 8px;">
+                    <div codes="ad1a7596-65eb-48b4-909f-11679731ae94" class="sonChannelDiv actived" style="margin-left: 17px;background: #008cff;">
+                        <i class="iconfont icon-a-icon-chuligonggao " style="color: #fff;"></i>
+                        <span class="sonChannelSpan">投诉处理公告</span>
+                    </div>
+                    <div codes="e917a5c3-39a0-4bda-ae7f-8e4cbe880b71" class="sonChannelDiv" style="background: #F6F5FF;">
+                        <i class="iconfont icon-a-icon-zhiqinggaozhishu" style="background-image: linear-gradient(180deg, #B7A4FA 0%, #806BF3 100%);"></i>
+                        <span class="sonChannelSpan" style="color: #806BF3;">知情告知书</span>
+                    </div>
+                </div>
+                <div class="sonChannel" style="width: 840px;height: 133px;float: left;margin: 0 0 20px 15px; padding: 0 10px; background: #FFFFFF;box-shadow: 0 0 8px 0 rgba(17,80,225,0.20);border-radius: 8px;">
+                    <div codes="all" class="sonChannelDiv" style="background: #EFF3FD;">
+                        <!--                        <i class="iconfont icon-a-icon-zhengfushixin" style="background-image: linear-gradient(180deg, #6194EC 0%, #325BD4 100%);"></i>-->
+                        <!--                        <span class="sonChannelSpan" style="color: #325BD4;">全部</span>-->
+                        <img class="sonChannelImg" src="/freecms-glht/site/juncai/resources/img/iconQB1.png">
+                        <img class="sonChannelImg" src="/freecms-glht/site/juncai/resources/img/iconQB.png" style="display: none">
+                        <span class="sonChannelSpan" style="color: #325BD4; margin-top: 0px !important;">全部</span>
+                        <!--                        <span class="sonChannelSpan" style="color: #325BD4 !important; margin-top: 0px !important;">全部</span>-->
+                    </div>
+                    <div codes="warn" class="sonChannelDiv" style="background: #E8FBF9;">
+                        <i class="iconfont icon-a-icon-yujingmingdan" style="background-image: linear-gradient(180deg, #15E0D3 0%, #09BEA8 100%);"></i>
+                        <span class="sonChannelSpan" style="color: #09BEA8;">军队采购预警名单</span>
+                    </div>
+<!--                    <div codes="warn" class="sonChannelDiv" style="background: #FFF8EF;">-->
+<!--                        <i class="iconfont icon-a-icon-yujingmingdan" style="background-image: linear-gradient(180deg, #FCBD70 0%, #F8883D 100%);"></i>-->
+<!--                        <span class="sonChannelSpan" style="color: #F8883D;">军队采购预警名单</span>-->
+<!--                    </div>-->
+                    <div codes="suspend" class="sonChannelDiv" style="background: #FFF8EF;">
+                        <i class="iconfont icon-a-icon-zantingmingdan" style="background-image: linear-gradient(180deg, #FCBD70 0%, #F8883D 100%);"></i>
+                        <span class="sonChannelSpan" style="color: #F8883D;">军队采购暂停名单</span>
+                    </div>
+                    <div codes="breakFaith" class="sonChannelDiv" style="background: #FEF2F1;">
+                        <i class="iconfont icon-a-icon-shixinmingdan" style="background-image: linear-gradient(180deg, #F79386 0%, #EC5A4E 100%);"></i>
+                        <span class="sonChannelSpan" style="color: #EC5A4E;">军队采购失信名单</span>
+                    </div>
+            <div codes="govBreakFaith" class="sonChannelDiv" style="background: #EFF3FD;">
+                <i class="iconfont icon-a-icon-zhengfushixin" style="background-image: linear-gradient(180deg, #6194EC 0%, #325BD4 100%);"></i>
+                <span class="sonChannelSpan" style="color: #325BD4;">政府采购失信名单</span>
+            </div>
+        </div>
+        <div class="procurementAnnouncementSearch searchJdJcBox searchBox searchBoxHeight layui-form" id="myDiv" style="width: 1200px; height: auto; margin-top: 150px;">
+            <div class="layui-row rowSearch">
+                <div class="layui-col-md4 searchNoticeType">
+                    <div class="grid-demo grid-demo-bg1">
+                        <div class="layui-inline layui-form-item">
+                            <label class="layui-form-label">关键字</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="identity" lay-verify="identity" placeholder="请输入关键字" autocomplete="off" class="layui-input" id="handleSearchParam">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md12 searchNoticeAllType">
+                    <div class="grid-demo grid-demo-bg1">
+                        <div class="layui-inline layui-form-item" style="width: 100%;">
+                            <label class="layui-form-label">关键字</label>
+                            <div class="layui-input-block" style="width: 80% !important;">
+                                <input type="text" name="identity" lay-verify="identity" placeholder="请输入关键字，如供应商名称等" autocomplete="off" class="layui-input" id="handleSearchAllParam">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md4 searchType">
+                    <div class="grid-demo grid-demo-bg1">
+                        <div class="layui-inline layui-form-item">
+                            <label class="layui-form-label">处理主体类型</label>
+                            <div class="layui-input-inline layui-form">
+                                <select name="modules" lay-verify="required" lay-search="" lay-filter="caigoufangshiNews" placeholder="请选择您要查询的内容" id="creditTypeId">
+                                    <option class="" value="">全部</option>
+                                    <option class="" value="4">供应商</option>
+                                    <option class="" value="5">专家</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md4 searchNoAllType">
+                    <div class="grid-demo grid-demo-bg1">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label searchTypeName">供应商/专家名称</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="identity" lay-verify="identity" placeholder="请输入您要查询的内容" autocomplete="off" class="layui-input" id="creditNameId">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md4 searchNoticeType">
+                    <div class="grid-demo grid-demo-bg1">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label searchTypeName2" style="width: 130px !important;">统一社会信用代码/身份证号码</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="identity" lay-verify="identity" placeholder="请输入您要查询的内容" autocomplete="off" class="layui-input" id="creditCodeId">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--</div>-->
+                <!--<div class="layui-row rowSearch">-->
+                <div class="layui-col-md4 searchType searchType2">
+                    <div class="grid-demo grid-demo-bg1">
+                        <div class="layui-inline layui-form-item">
+                            <label class="layui-form-label">处理结果</label>
+                            <div class="layui-input-inline layui-form">
+                                <select name="modules" lay-verify="required" lay-search="" lay-filter="caigoufangshiNews" id="handleResultId">
+                                    <option class="" value="">全部</option>
+                                    <option class="" value="0">禁止其1年内参加</option>
+                                    <option class="" value="1">禁止其2年内参加</option>
+                                    <option class="" value="2">禁止其3年内参加</option>
+                                    <option class="" value="3">终身禁止参加</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md4 searchType searchType3">
+                    <div class="grid-demo grid-demo-bg1">
+                        <div class="layui-inline layui-form-item">
+                            <label class="layui-form-label">处理范围</label>
+                            <div class="layui-input-inline layui-form">
+                                <select name="handleScopeId" lay-verify="required" lay-search="" lay-filter="handleScopeId" id="handleScopeId">
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md4 searchType searchType2">
+                    <div class="grid-demo grid-demo-bg1">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">处罚生效范围（品种）</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="identity" lay-verify="identity" placeholder="请输入您要查询的内容" autocomplete="off" class="layui-input" id="breedCategoryId">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--</div>-->
+                <!--<div class="layui-row rowSearch">-->
+                <div class="layui-col-md4 searchNoticeType">
+                    <div class="grid-demo grid-demo-bg1">
+                        <div class="layui-inline layui-form-item">
+                            <label class="layui-form-label">处理部门</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="identity" lay-verify="identity" placeholder="请输入您要查询的内容" autocomplete="off" class="layui-input" id="handleDepartmentId">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md4 searchNoticeType searchType">
+                    <div class="grid-demo grid-demo-bg1">
+                        <div class="layui-inline layui-form-item">
+                            <label class="layui-form-label">处理编号</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="identity" lay-verify="identity" placeholder="请输入您要查询的内容" autocomplete="off" class="layui-input" id="handleCodeId">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md4 searchNoticeType searchType">
+                    <div class="grid-demo grid-demo-bg1">
+                        <div class="layui-inline layui-form-item">
+                            <label class="layui-form-label">组织形式</label>
+                            <div class="layui-input-inline layui-form">
+                                <select name="modules" lay-verify="required" lay-search="" lay-filter="caigoufangshiNews" id="organizationalId">
+                                    <option class="" value="">全部</option>
+                                    <option class="" value="focus">集中采购</option>
+                                    <option class="" value="self">自行采购</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md8 searchNoAllType">
+                    <div class="grid-demo grid-demo-bg1">
+                        <div class="layui-inline" style="margin-bottom: 15px;">
+                            <label class="layui-form-label searchTypeName3">处理日期</label>
+                            <div class="layui-input-inline" style="width: 205px;">
+                                <input type="text" name="date" lay-verify="date" placeholder="请选择开始时间" autocomplete="off" class="layui-input" id="stateDate">
+                            </div>
+                            <span style="display: inline-block;margin: 0 17px;">~</span>
+                            <div class="layui-input-inline" style="width: 205px;">
+                                <input type="text" name="date" lay-verify="date" placeholder="请选择结束时间" autocomplete="off" class="layui-input" id="endDate">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-row" style="margin-top: 10px;">
+                <div class="layui-col-md12" style="text-align: center;">
+                    <div class="grid-demo">
+                        <div class="layui-form-item">
+                            <button type="button" class="layui-btn layui-btn-normal clickButton" id="Inquire" style="margin-right: 12px; color: #555;">查询<img src="/freecms-glht/site/juncai/resources/img/chaxun.png" /></button>
+                            <button style="margin-left: 20px;" type="button" class="layui-btn layui-btn-primary" id="queryReset">重置<img src="/freecms-glht/site/juncai/resources/img/chongzhi.png" /></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--展示数据-->
+        <div class="searchBoxJdjcBottom"  style="height: auto;">
+            <div class="noticeShowLabel" id="normal-title" style="width: 1160px;">
+                <span>标题</span>
+                <span>发布时间</span>
+            </div>
+            <div class="noticeShowLabels" style="width: 1160px; display: none;">
+                <span style="float: none;width: 120px;text-align: left;margin-left: 20px;font-weight: Bold; display: none;" id="tableCodeName">处理编号</span>
+                <span style="float: none;width: 200px;text-align: left;margin-left: 20px;font-weight: Bold;" id="tableCreditName">供应商/专家名称</span>
+                <span style="float: none;width: 200px;text-align: left;font-weight: Bold;" id="tableCreditCode">统一社会信用代码/身份证号码</span>
+                <span style="float: none;width: 160px;color: #FFF;font-weight: Bold;" id="handleResultName">处理结果</span>
+                <span style="float: none;width: 120px;color: #FFF;font-weight: Bold;" id="handleScopeName">暂停生效范围（单位）</span>
+                <span style="float: none;width: 170px;color: #FFF;font-weight: Bold;" id="breedCategory">处罚生效范围（品种）</span>
+                <span style="float: none;width: 133px;color: #fff;font-weight: bold" id="tableCreditDate">处理日期</span>
+                <span style="   float: none;width: 133px;color: #fff;font-weight: bold" id="tableCreditUnit">处理部门</span>
+            </div>
+            <ul class="noticeShowList" style="width: 1160px;height: 1020px">
+            </ul>
+            <!--            <div id="pagination" class="pagination" style="float: right;margin-right: 103px; display: none;"></div>-->
+            <div id="pagination" class="pagination" style="display: none;"></div>
+            <div id="paginationBottomP" style="text-align: right !important;"></div>
+        </div>
+    </div>
+    </div>
+    <!-- 遮罩层模板 -->
+    <!--<div id="loadingMask" style="display:none;">-->
+    <!--<div id="loadingText">正在加载中...</div>-->
+    <!--</div>-->
+    </div>
+</section>
+<!--  footer -->
+<!---->
+<!---->
+<footer class="foot" style="background-image: url('/freecms-glht/site/juncai/resources/img/footBG.png')">
+    <div class="foot-container">
+        <div class="recordNo">
+            <p style="transform: translateY(14px);">
+                        <span style="display: inline-block;margin-top: 24px;">Copyright &#169 2022     ｜     版权所有：中央军委后勤保障部 ｜ 京ICP备2021031882号-1</span>
+                <!--<span style="display: inline-block;margin-top: 24px;">Copyright &#169 2022     ｜     版权所有：中央军委后勤保障部     ｜     京ICP备2021031882号-1</span>-->
+                <br/>
+                <!--<span>浏览本网主页，建议将电脑显示屏的分辨率调为1024*768</span>-->
+                <!--<br/>-->
+<!--                今日访问量：<span class="today_number" style="font-size: 16px; font-weight: bold;color: #FFCB02;"></span>次&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp-->
+<!--                总访问量：<span class="views_number" style="font-size: 16px; font-weight: bold;color: #FFCB02;"></span>次-->
+                <span style="display:inline-block;transform: translateY(10px);">今日访问量：<span class="today_number" style="font-size: 16px; font-weight: bold;color: #FFCB02;"></span>次</span>
+                &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+                <span style="display:inline-block;transform: translateY(10px);">总访问量：<span class="views_number" style="font-size: 16px; font-weight: bold;color: #FFCB02;"></span>次</span>
+            </p>
+        </div>
+    </div>
+</footer>
+<!---->
+<!---->
+    <style>
+        .dzjgImg {
+            display: inline-block;
+            position: relative;
+            bottom: 15px;
+        }
+        .illustrate {
+            display: inline-block;
+            width: 510px;
+            height: 66px;
+            font-size: 14px;
+            font-weight: 400;
+            text-align: left;
+            color: #ffffff;
+            line-height: 22px;
+            vertical-align: middle;
+            position: relative;
+            bottom: 15px;
+            left: 219px;
+        }
+       #_span_jiucuo {
+           position: relative;
+           top: 4px;
+           left: 40px;
+       }
+    </style>
+</html>
+<script>
+    $(document).ready(function () {
+        $.ajax({
+            type: 'GET',
+            headers:{
+                'nsssjss':encryptByRSA(getFreecms() + '/rest/v1/notice/statistics.do' + '$$'+ new Date().getTime())
+            },
+            url: getFreecms() +'/rest/v1/notice/statistics.do',
+            contentType: "application/json;charset=utf-8",
+            success: function (res) {
+                var  visitToday = res.data.todayVisits;
+                var visitAll = res.data.totalVisits;
+                $(".today_number").append(visitToday);
+                $(".views_number").append(visitAll);
+            }
+        });
+    })
+</script>
+<script>
+    $('#Inquire').click(function(){
+        $(this).addClass('clickButton').siblings().removeClass('clickButton');
+    })
+    $('#queryReset').click(function(){
+        $(this).addClass('clickButton').siblings().removeClass('clickButton');
+    })
+    $(function() {
+        $('.searchType').hide();
+        $('.searchNoticeType').hide();
+        $('.searchNoticeAllType').hide();
+        $('.searchTypeName').text('标题');
+        $('.searchTypeName3').text('发布时间');
+
+        $('.noticeShowList').find('li').hover(
+            function() {
+                $(this).addClass('pinkhover')
+            },
+            function() {
+                $(this).removeClass('pinkhover')
+            }
+        );
+        laydate.render({
+            elem: '#operationStartTime', //指定元素
+            type: 'datetime'
+        });
+        laydate.render({
+            elem: '#operationEndTime', //指定元素
+            type: 'datetime'
+        });
+        layui.use(['form', 'layedit', 'laydate'], function(){
+            var form = layui.form
+                ,layer = layui.layer
+                ,layedit = layui.layedit
+                ,laydate = layui.laydate;
+            //日期
+            laydate.render({
+                elem: '#stateDate'
+                //,type: 'date'
+                ,type: 'datetime'
+            });
+            laydate.render({
+                elem: '#endDate'
+                //,type: 'date'
+                ,type: 'datetime'
+            });
+            // form.on('select(creditTypeId)', function(data){
+            //     if(data.value!="-1"){
+            //         creditType = data.value;
+            //     }else{
+            //         creditType = '';
+            //     }
+            // });
+        });
+
+        var purCatalogType = '';
+        var selectTimeName='';
+        var siteId = '404bb030-5be9-4070-85bd-c94b1473e8de';
+        // var channel = '18b8eb7c-4415-4d59-8172-72016a33e36f';
+        var channel = 'ad1a7596-65eb-48b4-909f-11679731ae94';
+        var publishType = '18b8eb7c-4415-4d59-8172-72016a33e36f';
+        var noticeType ='';//公告类型
+        var currPage ='1';
+        var pageSize ='20';
+        var total ='';
+        var creditType = '';// 处理主体类型
+        var creditName = ''; //（企业、供应商、专家）名称
+        var creditCode = ''; // 代码/身份证/統一信用社会代码
+        var handleResult = ''; // 处理结果
+        var handleScope = ''; // 处理范围
+        var breedCategory = ''; // 精准处罚
+        var handleUnit = ''; // 处理部门
+        var code = ''; // 处理编号
+        var handleSearchParam = ''; // 关键字
+        var startDate = ''; // 处理日期（开始）
+        var endDate = ''; // 处理日期（结束）
+        var organizationForm = ''; // 组织形式
+        var productType = ''; // 生产内外网模式
+        productType = $('#productType').val()
+
+        // 查询
+        $('#Inquire').click(function () {
+            currPage = 1;
+            getDataList(currPage, pageSize, noticeType);
+            // creditType = '';// 处理主体类型
+            // creditName = ''; //（企业、供应商、专家）名称
+            // creditCode = ''; // 代码/身份证/統一信用社会代码
+            // handleResult = ''; // 处理结果
+            // handleScope = ''; // 处理范围
+            // breedCategory = ''; // 精准处罚
+            // handleUnit = ''; // 处理部门
+            // startDate = ''; // 处理日期（开始）
+            // endDate = ''; // 处理日期（结束）
+            // $('#creditNameId').val('');
+            // $('#creditCodeId').val('');
+            // $('#handleDepartmentId').val('');
+            // $('#creditTypeId').val('');
+            // $('#handleResultId').val('');
+            // $('#handleScopeId').val('');
+            // $('#breedCategoryId').val('');
+            // $('#stateDate').val('');
+            // $('#endDate').val('');
+        })
+        // 重置
+        $('#queryReset').click(function () {
+            $('#creditNameId').val('');
+            $('#handleSearchParam').val(''); // 关键字
+            $('#handleSearchAllParam').val(''); // all关键字
+            $('#creditCodeId').val(''); // 统一社会信用代码/身份证号码
+            getQueryResetFun();
+            getDataList(currPage, pageSize, noticeType, 1);
+        });
+        function  getQueryResetFun(){
+            creditType = '';// 处理主体类型
+            creditName = ''; //（企业、供应商、专家）名称
+            creditCode = ''; // 代码/身份证/統一信用社会代码
+            handleResult = ''; // 处理结果
+            handleScope = ''; // 处理范围
+            breedCategory = ''; // 精准处罚
+            handleUnit = ''; // 处理部门
+            code = ''; // 处理编号
+            handleSearchParam = ''; // 关键字
+            startDate = ''; // 处理日期（开始）
+            endDate = ''; // 处理日期（结束）
+            organizationForm = ''; // 组织形式
+            // $('#creditNameId').val(''); // 供应商/专家名称
+            // $('#creditCodeId').val(''); // 统一社会信用代码/身份证号码
+            $('#handleDepartmentId').val('');
+            $('#handleCodeId').val('');
+            // $('#handleSearchParam').val(''); // 关键字
+            $('#creditTypeId').val('');
+            $('#handleResultId').val('');
+            $('#handleScopeId').val('');
+            $('#breedCategoryId').val('');
+            $('#stateDate').val('');
+            $('#endDate').val('');
+            $('#organizationalId').val('');
+            layui.form.render();
+        };
+        //点击子栏目sonChannelDiv
+        $(".sonChannelDiv").click(function (){
+            $(this).addClass('actived').siblings().removeClass('actived');
+            channel = $(this).attr('codes');
+            if(channel=='18b8eb7c-4415-4d59-8172-72016a33e36f'){
+                $(".noticeTypeKindQB").hide();
+            }else{
+                $(".noticeTypeKindQB").show();
+            }
+            $(".noticeShowList").empty();
+            $("#pagination").hide();
+            $(".noticeShowList").append('<div id="loadingMask" style="display:block;"><div id="loadingText"><img src="/freecms-glht/site/juncai/resources/img/loading.png"  width="50" style="display: block; margin: 20px;" />正在加载中...</div></div>');
+            if (channel=='ad1a7596-65eb-48b4-909f-11679731ae94'){
+                getQueryResetFun();
+                $(".sonChannelDiv").eq(0).attr('style','background: #008cff !important; margin-left: 17px; !important;');
+                $(".sonChannelDiv .iconfont").eq(0).attr('style','color: #fff !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(0).attr('style','color: #fff !important;');
+
+                $(".sonChannelDiv").eq(1).attr('style','background: #F6F5FF !important;');
+                $(".sonChannelDiv .iconfont").eq(1).attr('style','background-image: linear-gradient(180deg, #B7A4FA 0%, #806BF3 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(1).attr('style','color: #806BF3 !important;');
+
+                $(".sonChannelDiv").eq(2).attr('style','background: #EFF3FD !important;');
+                // $(".sonChannelDiv .iconfont").eq(2).attr('style','background-image: linear-gradient(180deg, #6194EC 0%, #325BD4 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(2).attr('style','color: #325BD4 !important; margin-top: 0px !important');
+                $(".sonChannelDiv").eq(2).find('img').eq(0).show();
+                $(".sonChannelDiv").eq(2).find('img').eq(1).hide();
+
+                $(".sonChannelDiv").eq(3).attr('style','background: #E8FBF9 !important;');
+                $(".sonChannelDiv .iconfont").eq(2).attr('style','background-image: linear-gradient(180deg, #15E0D3 0%, #09BEA8 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(3).attr('style','color: #09BEA8 !important;');
+
+                $(".sonChannelDiv").eq(4).attr('style','background: #FFF8EF !important;');
+                $(".sonChannelDiv .iconfont").eq(3).attr('style','background-image: linear-gradient(180deg, #FCBD70 0%, #F8883D 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(4).attr('style','color: #F8883D !important;');
+
+                $(".sonChannelDiv").eq(5).attr('style','background: #FEF2F1 !important;');
+                $(".sonChannelDiv .iconfont").eq(4).attr('style','background-image: linear-gradient(180deg, #F79386 0%, #EC5A4E 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(5).attr('style','color: #EC5A4E !important;');
+
+                $(".sonChannelDiv").eq(6).attr('style','background: #EFF3FD !important;');
+                $(".sonChannelDiv .iconfont").eq(5).attr('style','background-image: linear-gradient(180deg, #6194EC 0%, #325BD4 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(6).attr('style','color: #325BD4 !important;');
+
+                $('.searchType').hide();
+                $('.searchNoticeType').hide();
+                $('.searchTypeName').text('标题');
+                $('.searchTypeName3').text('发布时间');
+                $('#normal-title').show();
+                $('.noticeShowLabels').hide();
+                $('#tableCodeName').hide();
+                $('.searchNoticeAllType').hide();
+                $('.searchNoAllType').show();
+                var select = 'dd[lay-value=' + -1 + ']';
+                $('#punishType').siblings("div.layui-form-select").find('dl').find(select).click();
+                punishType = ''
+            }
+            if(channel=='e917a5c3-39a0-4bda-ae7f-8e4cbe880b71'){
+                getQueryResetFun();
+                $(".sonChannelDiv").eq(0).attr('style','background: #E5F6FF !important; margin-left: 17px; !important;');
+                $(".sonChannelDiv .iconfont").eq(0).attr('style','color: #008CFF !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(0).attr('style','color: #008CFF !important;');
+
+                $(".sonChannelDiv").eq(1).attr('style','background-image: linear-gradient(180deg, #B7A4FA 0%, #806BF3 100%) !important;');
+                $(".sonChannelDiv .iconfont").eq(1).attr('style','color: #fff !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(1).attr('style','color: #fff !important;');
+
+                $(".sonChannelDiv").eq(2).attr('style','background: #EFF3FD !important;');
+                // $(".sonChannelDiv .iconfont").eq(2).attr('style','background-image: linear-gradient(180deg, #6194EC 0%, #325BD4 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(2).attr('style','color: #325BD4 !important; margin-top: 0px !important');
+                $(".sonChannelDiv").eq(2).find('img').eq(0).show();
+                $(".sonChannelDiv").eq(2).find('img').eq(1).hide();
+
+                $(".sonChannelDiv").eq(3).attr('style','background: #E8FBF9 !important;');
+                $(".sonChannelDiv .iconfont").eq(2).attr('style','background-image: linear-gradient(180deg, #15E0D3 0%, #09BEA8 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(3).attr('style','color: #09BEA8 !important;');
+
+                $(".sonChannelDiv").eq(4).attr('style','background: #FFF8EF !important;');
+                $(".sonChannelDiv .iconfont").eq(3).attr('style','background-image: linear-gradient(180deg, #FCBD70 0%, #F8883D 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(4).attr('style','color: #F8883D !important;');
+
+                $(".sonChannelDiv").eq(5).attr('style','background: #FEF2F1 !important;');
+                $(".sonChannelDiv .iconfont").eq(4).attr('style','background-image: linear-gradient(180deg, #F79386 0%, #EC5A4E 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(5).attr('style','color: #EC5A4E !important;');
+
+                $(".sonChannelDiv").eq(6).attr('style','background: #EFF3FD !important;');
+                $(".sonChannelDiv .iconfont").eq(5).attr('style','background-image: linear-gradient(180deg, #6194EC 0%, #325BD4 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(6).attr('style','color: #325BD4 !important;');
+
+                $('.searchType').hide();
+                $('.searchNoticeType').hide();
+                $('.searchTypeName').text('标题');
+                $('.searchTypeName3').text('发布时间');
+                $('#normal-title').show();
+                $('.noticeShowLabels').hide();
+                $('#tableCreditName').text('供应商/专家名称');
+                $('#breedCategory').show();
+                $('#handleScopeName').show();
+                $('#tableCodeName').hide();
+                $('.searchNoticeAllType').hide();
+                $('.searchNoAllType').show();
+            }
+            if (channel=='all') {
+                getQueryResetFun();
+                $(".sonChannelDiv").eq(0).attr('style','background: #E5F6FF !important; margin-left: 17px; !important;');
+                $(".sonChannelDiv .iconfont").eq(0).attr('style','color: #008CFF !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(0).attr('style','color: #008CFF !important;');
+
+                $(".sonChannelDiv").eq(1).attr('style','background: #F6F5FF !important;');
+                $(".sonChannelDiv .iconfont").eq(1).attr('style','background-image: linear-gradient(180deg, #B7A4FA 0%, #806BF3 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(1).attr('style','color: #806BF3 !important;');
+
+                $(".sonChannelDiv").eq(2).attr('style','background-image: linear-gradient(180deg, #6194EC 0%, #325BD4 100%) !important;');
+                // $(".sonChannelDiv .iconfont").eq(2).attr('style','color: #EFF4FD !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(2).attr('style','color: #fff !important; margin-top: 0px !important;');
+                $(".sonChannelDiv").eq(2).find('img').eq(0).hide();
+                $(".sonChannelDiv").eq(2).find('img').eq(1).show();
+
+                $(".sonChannelDiv").eq(3).attr('style','background: #E8FBF9 !important;');
+                $(".sonChannelDiv .iconfont").eq(2).attr('style','background-image: linear-gradient(180deg, #15E0D3 0%, #09BEA8 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(3).attr('style','color: #09BEA8 !important;');
+
+                $(".sonChannelDiv").eq(4).attr('style','background: #FFF8EF !important;');
+                $(".sonChannelDiv .iconfont").eq(3).attr('style','background-image: linear-gradient(180deg, #FCBD70 0%, #F8883D 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(4).attr('style','color: #F8883D !important;');
+
+                $(".sonChannelDiv").eq(5).attr('style','background: #FEF2F1 !important;');
+                $(".sonChannelDiv .iconfont").eq(4).attr('style','background-image: linear-gradient(180deg, #F79386 0%, #EC5A4E 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(5).attr('style','color: #EC5A4E !important;');
+
+                $(".sonChannelDiv").eq(6).attr('style','background: #EFF3FD !important;');
+                $(".sonChannelDiv .iconfont").eq(5).attr('style','background-image: linear-gradient(180deg, #6194EC 0%, #325BD4 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(6).attr('style','color: #325BD4 !important;');
+
+                $('.searchType').hide();
+                $('.searchNoticeType').hide();
+                $('#normal-title').hide();
+                $('.noticeShowLabels').show();
+                $('#breedCategory').hide();
+                $('#handleScopeName').hide();
+                $('#tableCodeName').show();
+                $('.searchNoticeAllType').show();
+                $('.searchNoAllType').hide();
+
+                $('#tableCreditName').text('供应商/专家名称');
+                $('#handleScopeName').text('名单类型');
+                $('#handleResultName').hide();
+                $('#breedCategory').hide();
+                $('#tableCreditName').attr('style','width: 270px !important; padding-left: 20px !important; font-weight: bold !important;');
+                $('#tableCreditCode').attr('style','width: 290px !important; font-weight: bold !important;');
+                $('#handleScopeName').attr('style','width: 140px !important; font-weight: bold !important;');
+                $('#tableCreditDate').attr('style','width: 150px !important; font-weight: bold !important;');
+                $('#tableCreditUnit').attr('style','width: 150px !important; font-weight: bold !important;');
+            }
+            if(channel=='warn'){
+                getQueryResetFun();
+                $(".sonChannelDiv").eq(0).attr('style','background: #E5F6FF !important; margin-left: 17px; !important;');
+                $(".sonChannelDiv .iconfont").eq(0).attr('style','color: #008CFF !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(0).attr('style','color: #008CFF !important;');
+
+                $(".sonChannelDiv").eq(1).attr('style','background: #F6F5FF !important;');
+                $(".sonChannelDiv .iconfont").eq(1).attr('style','background-image: linear-gradient(180deg, #B7A4FA 0%, #806BF3 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(1).attr('style','color: #806BF3 !important;');
+
+                $(".sonChannelDiv").eq(2).attr('style','background: #EFF3FD !important;');
+                $(".sonChannelDiv .iconfont").eq(2).attr('style','background-image: linear-gradient(180deg, #6194EC 0%, #325BD4 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(2).attr('style','color: #325BD4 !important; margin-top: 0px !important');
+                $(".sonChannelDiv").eq(2).find('img').eq(0).show();
+                $(".sonChannelDiv").eq(2).find('img').eq(1).hide();
+
+                $(".sonChannelDiv").eq(3).attr('style','background-image: linear-gradient(180deg, #15E0D3 0%, #09BEA8 100%) !important;');
+                // $(".sonChannelDiv").eq(3).attr('style','background-image: linear-gradient(180deg, #FCBD70 0%, #F8883D 100%) !important');
+                $(".sonChannelDiv .iconfont").eq(2).attr('style','color: #fff !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(3).attr('style','color: #fff !important;');
+
+                $(".sonChannelDiv").eq(4).attr('style','background: #FFF8EF !important;');
+                $(".sonChannelDiv .iconfont").eq(3).attr('style','background-image: linear-gradient(180deg, #FCBD70 0%, #F8883D 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(4).attr('style','color: #F8883D !important;');
+
+                $(".sonChannelDiv").eq(5).attr('style','background: #FEF2F1 !important;');
+                $(".sonChannelDiv .iconfont").eq(4).attr('style','background-image: linear-gradient(180deg, #F79386 0%, #EC5A4E 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(5).attr('style','color: #EC5A4E !important;');
+
+                $(".sonChannelDiv").eq(6).attr('style','background: #EFF3FD !important;');
+                $(".sonChannelDiv .iconfont").eq(5).attr('style','background-image: linear-gradient(180deg, #6194EC 0%, #325BD4 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(6).attr('style','color: #325BD4 !important;');
+                $('.searchType').show();
+                $('.searchType2').hide();
+                $('.searchType3').hide();
+                $('.searchNoticeType').show();
+                $('.searchTypeName3').text('处理日期');
+                $('.searchTypeName').text('供应商/专家名称');
+                $('.searchTypeName2').text('统一社会信用代码/身份证号码');
+                $('#normal-title').hide();
+                $('.noticeShowLabels').show();
+                $('#tableCreditName').text('供应商/专家名称');
+                $('#handleScopeName').hide();
+                $('#handleResultName').hide();
+                $('#breedCategory').hide();
+                $('#tableCodeName').show();
+                $('#tableCreditName').attr('style','width: 350px !important; padding-left: 20px !important; font-weight: bold !important;');
+                $('#tableCreditCode').attr('style','width: 350px !important; font-weight: bold !important;');
+                $('#tableCreditDate').attr('style','width: 150px !important; font-weight: bold !important;');
+                $('#tableCreditUnit').attr('style','width: 140px !important; font-weight: bold !important;');
+                $('.searchNoticeAllType').hide();
+                $('.searchNoAllType').show();
+                var select = 'dd[lay-value=' + -1 + ']';
+                $('#punishType').siblings("div.layui-form-select").find('dl').find(select).click();
+                punishType = ''
+            }
+            if(channel=='suspend'){
+                getQueryResetFun();
+                $(".sonChannelDiv").eq(0).attr('style','background: #E5F6FF !important; margin-left: 17px; !important;');
+                $(".sonChannelDiv .iconfont").eq(0).attr('style','color: #008CFF !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(0).attr('style','color: #008CFF !important;');
+
+                $(".sonChannelDiv").eq(1).attr('style','background: #F6F5FF !important;');
+                $(".sonChannelDiv .iconfont").eq(1).attr('style','background-image: linear-gradient(180deg, #B7A4FA 0%, #806BF3 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(1).attr('style','color: #806BF3 !important;');
+
+                $(".sonChannelDiv").eq(2).attr('style','background: #EFF3FD !important;');
+                // $(".sonChannelDiv .iconfont").eq(2).attr('style','background-image: linear-gradient(180deg, #6194EC 0%, #325BD4 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(2).attr('style','color: #325BD4 !important; margin-top: 0px !important');
+                $(".sonChannelDiv").eq(2).find('img').eq(0).show();
+                $(".sonChannelDiv").eq(2).find('img').eq(1).hide();
+
+                $(".sonChannelDiv").eq(3).attr('style','background: #E8FBF9 !important;');
+                $(".sonChannelDiv .iconfont").eq(2).attr('style','background-image: linear-gradient(180deg, #15E0D3 0%, #09BEA8 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(3).attr('style','color: #09BEA8 !important;');
+
+                $(".sonChannelDiv").eq(4).attr('style','background-image: linear-gradient(180deg, #FCBD70 0%, #F8883D 100%) !important;');
+                $(".sonChannelDiv .iconfont").eq(3).attr('style','color: #fff !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(4).attr('style','color: #fff !important;');
+
+                $(".sonChannelDiv").eq(5).attr('style','background: #FEF2F1 !important;');
+                $(".sonChannelDiv .iconfont").eq(4).attr('style','background-image: linear-gradient(180deg, #F79386 0%, #EC5A4E 100%); !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(5).attr('style','color: #EC5A4E !important;');
+
+                $(".sonChannelDiv").eq(6).attr('style','background: #EFF3FD !important;');
+                $(".sonChannelDiv .iconfont").eq(5).attr('style','background-image: linear-gradient(180deg, #6194EC 0%, #325BD4 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(6).attr('style','color: #325BD4 !important;');
+                $('.searchType').show();
+                $('.searchType2').hide();
+                $('.searchType3').hide();
+                $('.searchNoticeType').show();
+                $('.searchTypeName3').text('处理日期');
+                $('.searchTypeName').text('供应商/专家名称');
+                $('.searchTypeName2').text('统一社会信用代码/身份证号码');
+                $('.noticeShowLabels').show();
+                $('#normal-title').hide();
+                $('#tableCreditName').text('供应商/专家名称');
+                $('#handleScopeName').text('暂停生效范围（单位）');
+                $('#handleScopeName').show();
+                $('#handleResultName').hide();
+                $('#breedCategory').hide();
+                $('#tableCodeName').show();
+                $('#tableCreditName').attr('style','width: 270px !important; padding-left: 20px !important; font-weight: bold !important;');
+                $('#tableCreditCode').attr('style','width: 250px !important; font-weight: bold !important;');
+                $('#handleScopeName').attr('style','width: 180px !important; font-weight: bold !important;');
+                $('#tableCreditDate').attr('style','width: 150px !important; font-weight: bold !important;');
+                $('#tableCreditUnit').attr('style','width: 150px !important; font-weight: bold !important;');
+                $('.searchNoticeAllType').hide();
+                $('.searchNoAllType').show();
+            }
+            if(channel=='breakFaith'){
+                getQueryResetFun();
+                $(".sonChannelDiv").eq(0).attr('style','background: #E5F6FF !important; margin-left: 17px; !important;');
+                $(".sonChannelDiv .iconfont").eq(0).attr('style','color: #008CFF !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(0).attr('style','color: #008CFF !important;');
+
+                $(".sonChannelDiv").eq(1).attr('style','background: #F6F5FF !important;');
+                $(".sonChannelDiv .iconfont").eq(1).attr('style','background-image: linear-gradient(180deg, #B7A4FA 0%, #806BF3 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(1).attr('style','color: #806BF3 !important;');
+
+                $(".sonChannelDiv").eq(2).attr('style','background: #EFF3FD !important;');
+                $(".sonChannelDiv .iconfont").eq(2).attr('style','background-image: linear-gradient(180deg, #6194EC 0%, #325BD4 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(2).attr('style','color: #325BD4 !important; margin-top: 0px !important');
+                $(".sonChannelDiv").eq(2).find('img').eq(0).show();
+                $(".sonChannelDiv").eq(2).find('img').eq(1).hide();
+
+                $(".sonChannelDiv").eq(3).attr('style','background: #E8FBF9 !important;');
+                $(".sonChannelDiv .iconfont").eq(2).attr('style','background-image: linear-gradient(180deg, #15E0D3 0%, #09BEA8 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(3).attr('style','color: #09BEA8 !important;');
+
+                $(".sonChannelDiv").eq(4).attr('style','background: #FFF8EF !important;');
+                $(".sonChannelDiv .iconfont").eq(3).attr('style','background-image: linear-gradient(180deg, #FCBD70 0%, #F8883D 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(4).attr('style','color: #F8883D !important;');
+
+                $(".sonChannelDiv").eq(5).attr('style','background-image: linear-gradient(180deg, #F79386 0%, #EC5A4E 100%) !important;');
+                $(".sonChannelDiv .iconfont").eq(4).attr('style','color: #fff !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(5).attr('style','color: #fff !important;');
+
+                $(".sonChannelDiv").eq(6).attr('style','background: #EFF3FD !important;');
+                $(".sonChannelDiv .iconfont").eq(5).attr('style','background-image: linear-gradient(180deg, #6194EC 0%, #325BD4 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(6).attr('style','color: #325BD4 !important;');
+
+                $('.searchType').show();
+                $('.searchType2').show();
+                $('.searchType3').hide();
+                $('.searchNoticeType').show();
+                $('.searchTypeName3').text('处理日期');
+                $('.searchTypeName').text('供应商/专家名称');
+                $('.searchTypeName2').text('统一社会信用代码/身份证号码');
+                $('#handleScopeName').text('处罚生效范围（单位）');
+                $('.noticeShowLabels').show();
+                $('#normal-title').hide();
+                $('#tableCreditName').text('供应商/专家名称');
+                $('#breedCategory').show();
+                $('#handleScopeName').show();
+                $('#handleResultName').show();
+                $('#breedCategory').show();
+                $('#tableCodeName').show();
+                $('#tableCreditName').attr('style','width: 170px !important; padding-left: 20px !important; font-weight: bold !important;');
+                $('#tableCreditCode').attr('style','width: 230px !important; font-weight: bold !important;');
+                $('#handleResultName').attr('style','width: 80px !important; font-weight: bold !important;');
+                $('#handleScopeName').attr('style','width: 160px !important; font-weight: bold !important;');
+                $('#breedCategory').attr('style','width: 160px !important; font-weight: bold !important;');
+                $('#tableCreditDate').attr('style','width: 80px !important; font-weight: bold !important;');
+                $('#tableCreditUnit').attr('style','width: 100px !important; font-weight: bold !important;');
+                $('.searchNoticeAllType').hide();
+                $('.searchNoAllType').show();
+            }
+            if(channel=='govBreakFaith'){
+                getQueryResetFun();
+                $(".sonChannelDiv").eq(0).attr('style','background: #E5F6FF !important; margin-left: 17px; !important;');
+                $(".sonChannelDiv .iconfont").eq(0).attr('style','color: #008CFF !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(0).attr('style','color: #008CFF !important;');
+
+                $(".sonChannelDiv").eq(1).attr('style','background: #F6F5FF !important;');
+                $(".sonChannelDiv .iconfont").eq(1).attr('style','background-image: linear-gradient(180deg, #B7A4FA 0%, #806BF3 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(1).attr('style','color: #806BF3 !important;');
+
+                $(".sonChannelDiv").eq(2).attr('style','background: #EFF3FD !important;');
+                // $(".sonChannelDiv .iconfont").eq(2).attr('style','background-image: linear-gradient(180deg, #6194EC 0%, #325BD4 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(2).attr('style','color: #325BD4 !important; margin-top: 0px !important');
+                $(".sonChannelDiv").eq(2).find('img').eq(0).show();
+                $(".sonChannelDiv").eq(2).find('img').eq(1).hide();
+
+                $(".sonChannelDiv").eq(3).attr('style','background: #E8FBF9 !important;');
+                $(".sonChannelDiv .iconfont").eq(2).attr('style','background-image: linear-gradient(180deg, #15E0D3 0%, #09BEA8 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(3).attr('style','color: #09BEA8 !important;');
+
+                $(".sonChannelDiv").eq(4).attr('style','background: #FFF8EF !important;');
+                $(".sonChannelDiv .iconfont").eq(3).attr('style','background-image: linear-gradient(180deg, #FCBD70 0%, #F8883D 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(4).attr('style','color: #F8883D !important;');
+
+                $(".sonChannelDiv").eq(5).attr('style','background: #FEF2F1 !important;');
+                $(".sonChannelDiv .iconfont").eq(4).attr('style','background-image: linear-gradient(180deg, #F79386 0%, #EC5A4E 100%) !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(5).attr('style','color: #EC5A4E !important;');
+
+                $(".sonChannelDiv").eq(6).attr('style','background-image: linear-gradient(180deg, #6194EC 0%, #325BD4 100%) !important;');
+                $(".sonChannelDiv .iconfont").eq(5).attr('style','color: #fff !important;');
+                $(".sonChannelDiv .sonChannelSpan").eq(6).attr('style','color: #fff !important;');
+                $('.searchNoticeType').show();
+                $('.noticeShowLabels').show();
+                $('.searchType').hide();
+                $('.searchType3').hide();
+                $('.searchTypeName3').text('处理日期');
+                $('.searchTypeName').text('企业名称');
+                $('.searchTypeName2').text('统一社会信用代码');
+                $('#normal-title').hide();
+                $('#tableCreditName').text('企业名称');
+                $('#breedCategory').hide();
+                $('#handleScopeName').hide();
+                $('#tableCodeName').hide();
+                $('#tableCreditName').attr('style','width: 200px !important; padding-left: 20px !important; font-weight: bold !important;');
+                $('#tableCreditCode').attr('style','width: 228px !important; font-weight: bold !important;');
+                $('#handleResultName').attr('style','width: 430px !important; font-weight: bold !important;');
+                $('#tableCreditDate').attr('style','width: 133px !important; font-weight: bold !important;');
+                $('#tableCreditUnit').attr('style','width: 133px !important; font-weight: bold !important;');
+                $('.searchNoticeAllType').hide();
+                $('.searchNoAllType').show();
+            }
+            getDataList(currPage, pageSize, noticeType);
+        });
+        getDataList(currPage, pageSize,  noticeType);
+        // 处理范围字典项
+        function queryDict() {
+            $('#handleScopeId').empty().append('<option value="">请选择</option>'); // 清空并添加默认选项
+            // $.ajax({
+            //     type: 'GET',
+            //     headers:{
+            //         'nsssjss':encryptByRSA(getFreecms() + '/rest/v1/punish/queryDict.do' + '$$'+ new Date().getTime())
+            //     },
+            //     url: getFreecms() + '/rest/v1/punish/queryClFwDict.do?code=' + 'allArmy',
+            //     contentType: "application/json;charset=utf-8",
+            //     success: function (res, textStatus, jqXHR) {
+            //         // console.log(res.data, jqXHR.status, 'queryDict');
+            //         $('#handleScopeId').empty().append('<option value="">请选择</option>'); // 清空并添加默认选项
+            //         if(jqXHR.status==200) {
+            //             if (res.data && res.data.length > 0) {
+            //                 var arrList = [];
+            //                 arrList = res.data;
+            //                 console.log(arrList, 'arrList');
+            //                 $.each(arrList, function(key, item) {
+            //                     var opt = $('<option></option>').val(item.DICT_CODE).text(item.DICT_NAME);
+            //                     $('#handleScopeId').append(opt);
+            //                 });
+            //
+            //                 // 初始化LayUI的form组件
+            //                 layui.use('form', function(){
+            //                     var form = layui.form;
+            //                     form.render('select'); // 渲染select元素
+            //                 });
+            //             } else {
+            //                 console.error("Error loading data");
+            //             }
+            //         } else {
+            //             console.error("Error loading data");
+            //         }
+            //     },
+            //     error: function(jqXHR, textStatus, errorThrown) {
+            //         // 处理错误的逻辑...
+            //         // 关闭遮罩层
+            //         $('#loadingMask').hide();
+            //         layer.msg('加载失败，请重试！', {icon: 5}); // 可以在这里添加错误提示
+            //     }
+            // })
+        }
+        queryDict();
+        //日期函数
+        function getDay(day){
+            var today = new Date();
+            var targetday_milliseconds=today.getTime() + 1000*60*60*24*day;
+            today.setTime(targetday_milliseconds); //注意，这行是关键代码
+            var tYear = today.getFullYear();
+            var tMonth = today.getMonth();
+            var tDate = today.getDate();
+            tMonth = doHandleMonth(tMonth + 1);
+            tDate = doHandleMonth(tDate);
+            return tYear+"-"+tMonth+"-"+tDate;
+        }
+        function doHandleMonth(month){
+            var m = month;
+            if(month.toString().length == 1){
+                m = "0" + month;
+            }
+            return m;
+        }
+        function cleanArray(arr) {
+            return arr.map(item => {
+                for(let key in item) {
+                    if(item.hasOwnProperty(key)) {
+                        const value = item[key];
+                        if (value === null || value === '' || (typeof value === 'string' && value.trim() === '')) {
+                            item[key]= '--';
+                        }
+                    }
+                }
+                return item;
+            });
+        }
+        function getDataList(currPage, pageSize,  noticeType, resetting) {
+            // console.log(resetting, 'resetting');
+            creditName = $('#creditNameId').val(); // 供应商/专家名称
+            creditCode = $('#creditCodeId').val(); // 统一社会信用代码/身份证号码
+            handleUnit = $('#handleDepartmentId').val(); // 处理部门
+            code = $('#handleCodeId').val(); // 处理编号
+            // console.log($('#handleSearchParam').val(), $('#handleSearchAllParam').val(), 'lllllllllllllllll')
+            if($('#handleSearchParam').val()) {
+                $('#handleSearchParam').val().trim();
+                handleSearchParam = $('#handleSearchParam').val()?$('#handleSearchParam').val():'';
+            } else if ($('#handleSearchAllParam').val()) {
+                $('#handleSearchAllParam').val().trim();
+                handleSearchParam = $('#handleSearchAllParam').val()?$('#handleSearchAllParam').val():'';
+            } else {
+                handleSearchParam = '';
+            } // 关键字
+            // console.log(handleSearchParam, 'handleSearchParam')
+            creditType = $('#creditTypeId').val();// 处理主体类型
+            handleResult = $('#handleResultId').val(); // 处理结果
+            handleScope = $('#handleScopeId').val(); // 处理范围
+            breedCategory = $('#breedCategoryId').val(); // 精准处罚
+            startDate = $('#stateDate').val(); // 处理日期（开始）
+            endDate = $('#endDate').val(); // 处理日期（结束）
+            organizationForm = $('#organizationalId').val()?$('#organizationalId').val():''; // 组织形式
+            selectTimeName='noticeTime';
+
+            var data = '';
+            var queryPunishListUrl = '';
+            $('#loadingMask').show();
+            // console.log(channel,'channel')
+            // if (channel=='all') {
+            //     channel=''
+            // }else{
+            //     channel=channel
+            // }
+            if (channel=='ad1a7596-65eb-48b4-909f-11679731ae94' || channel=='e917a5c3-39a0-4bda-ae7f-8e4cbe880b71') {
+                data = '?&siteId=' + siteId + '&channel=' + channel + '&currPage=' + currPage +
+                    '&pageSize=' + pageSize+
+                    '&title=' + creditName +'&operationStartTime=' + startDate+'&operationEndTime=' + endDate+
+                    '&selectTimeName=' + selectTimeName;
+                queryPunishListUrl = '/rest/v1/notice/selectInfoMoreChannel.do';
+            } else {
+                data = '?&siteId=' + siteId + '&channel=' + channel + '&pageNumber=' + currPage + '&pageSize=' + pageSize + '&' + 'creditType' + '=' + creditType +
+                    '&creditName=' + creditName +'&creditCode='+ creditCode +'&handleResultCode='+ handleResult +'&handleScopeFirst=' + handleScope +'&breedCategory='+ breedCategory +"&handleUnit="+ handleUnit +"&startDate="+ startDate +"&endDate="+ endDate +"&code="+ code +"&handleSearchParam="+handleSearchParam+"&organizationForm="+organizationForm;
+                queryPunishListUrl = '/rest/v1/punish/queryPunishList.do';
+            }
+            $.ajax({
+                type: 'GET',
+                headers:{
+                    'nsssjss':encryptByRSA(getFreecms() + '/rest/v1/punish/queryPunishList.do' + '$$'+ new Date().getTime())
+                },
+                url: getFreecms()+ queryPunishListUrl + data,
+                contentType: "application/json;charset=utf-8",
+                timeout: 50000,
+                success: function (res, textStatus, jqXHR) {
+                    // console.log(res, jqXHR.status, 'res');
+                    if(textStatus === 'timeout') {
+                        $('#loadingMask').hide();
+                        $(".noticeShowList").empty();
+                        $(".noticeShowList").append('<p style="text-align: center;margin-top: 40px;">查询接口超时！</p>');
+                    } else if(res.code==200) {
+                        $('#loadingMask').hide();
+                        $("#pagination").show();
+                        var obj = '';
+                        var env = '';
+                        if (res.data.information && res.data.information.overdue) {
+                            $('#paginationBottomP').show();
+                            $('#paginationBottomP').empty();
+                            $('#paginationBottomP').append('<p>(因处罚过期等原因&nbsp<span style="color: red;">' + res.data.information.overdue +'</span>&nbsp条不展示)</p>');
+                        } else {
+                            $('#paginationBottomP').hide();
+                        }
+                        if (channel == 'ad1a7596-65eb-48b4-909f-11679731ae94' || channel == 'e917a5c3-39a0-4bda-ae7f-8e4cbe880b71') {
+                            obj = res.data;
+                            // 分页
+                            total = res.total;
+                        } else {
+                            if (res.data && res.data.rows && (channel == 'govBreakFaith' || res.data.information && res.data.information.deleteFlag && res.data.information.deleteFlag=='false')) {
+                                obj = cleanArray(res.data.rows);
+                                // 分页
+                                total = res.data.total;
+                            } else if(res.data.queryInfo.queryString)  {
+                                var newStr = res.data.queryInfo.queryString.replace(/\r\n/g, "<br>");
+                                $(".noticeShowList").append('<p style="text-align: center; margin-top: 40px; color: red;">没有查询到相关记录<br/>' + newStr + '</p>');
+                                obj = '';
+                                // 分页
+                                total = '';
+                            }
+                            if (res.data.information && res.data.information.env) {
+                                env = res.data.information.env;
+                            }
+                        }
+                        // console.log(obj, obj.length, res.data.total, res, '测试');
+                        if (obj && obj.length > 0) {
+                            new Page({
+                                id: 'pagination',
+                                pageTotal: Math.ceil((total / pageSize)), //必填,总页数
+                                pageAmount: pageSize,  //每页多少条
+                                dataTotal: total, //总共多少条数据
+                                curPage: currPage, //初始页码,不填默认为1
+                                pageSize: 5, //分页个数,不填默认为5
+                                showPageTotalFlag: true, //是否显示数据统计,不填默认不显示
+                                showSkipInputFlag: true, //是否支持跳转,不填默认不显示
+                                getPage: function (page) {
+                                    //获取当前页数
+                                    // window.scrollTo(0, 0);
+                                    currPage = page;
+                                    getDataList(currPage, pageSize, noticeType);
+                                }
+                            });
+                        }
+                        $(".noticeShowList").empty();
+                        // $("#pagination").hide();
+                        $(".noticeShowList").append('<div id="loadingMask" style="display:none;"><div id="loadingText"><img src="/freecms-glht/site/juncai/resources/img/loading.png"  width="50" style="display: block; margin: 20px;" />正在加载中...</div></div>');
+                        var purchaseNature = {
+                            "1": "物资",
+                            "2": "工程",
+                            "3": "服务"
+                        };
+                        var purchaseManner = {
+                            "1": "公开招标",
+                            "2": "邀请招标",
+                            "3": "竞争性谈判",
+                            "4": "询价",
+                            "5": "单一来源",
+                            "6": "竞争性磋商",
+                            "9": "其他"
+                        };
+                        if (obj && obj.length > 0) {
+                            for (var i = 0; i < obj.length; i++) {
+                                var handleUnitData = '';
+                                if (obj[i].handleUnit) {
+                                    handleUnitData = obj[i].handleUnit;
+                                } else if (!obj[i].handleUnit || obj[i].handleUnit == null) {
+                                    handleUnitData = '--';
+                                }
+                                var handleDepartmentData = '';
+                                if (obj[i].handleDepartment) {
+                                    handleDepartmentData = obj[i].handleDepartment;
+                                } else if (!obj[i].handleDepartment || obj[i].handleDepartment == null) {
+                                    handleDepartmentData = '--';
+                                }
+                                var highlightClass =  obj[i].highLightFlag?'':'colorClass';
+                                if (channel == 'ad1a7596-65eb-48b4-909f-11679731ae94' || channel == 'e917a5c3-39a0-4bda-ae7f-8e4cbe880b71') {
+                                    var htmlTr = '';
+                                    var purchaseNatureWeneed = '';
+                                    var purchaseMannerWeneed = '';
+                                    var time = obj[i].noticeTime;
+                                    var noticeDetailUrl = '';
+                                    if (obj[i].noticeTime) {
+                                        var time = obj[i].noticeTime;
+                                        time = time.substr(0, 10);
+                                    } else {
+                                        time = '无'
+                                    }
+                                    if (time == 'null' || time == 'undefined') {
+                                        time = ''
+                                    }
+                                    if (obj[i].purchaseNature) {
+                                        purchaseNatureWeneed = purchaseNature[obj[i].purchaseNature]
+                                    } else {
+                                        purchaseNatureWeneed = '无'
+                                    }
+                                    if (obj[i].purchaseManner == '1') {
+                                        purchaseMannerWeneed = '公开招标'
+                                    } else if (obj[i].purchaseManner == '2') {
+                                        purchaseMannerWeneed = '邀请招标'
+                                    } else if (obj[i].purchaseManner == '3') {
+                                        purchaseMannerWeneed = '竞争性谈判'
+                                    } else if (obj[i].purchaseManner == '4') {
+                                        purchaseMannerWeneed = '询价'
+                                    } else if (obj[i].purchaseManner == '5') {
+                                        purchaseMannerWeneed = '单一来源'
+                                    } else if (obj[i].purchaseManner == '6') {
+                                        purchaseMannerWeneed = '竞争性磋商'
+                                    } else if (obj[i].purchaseManner == '9') {
+                                        purchaseMannerWeneed = '其他'
+                                    } else {
+                                        purchaseMannerWeneed = '无'
+                                    }
+                                    var creditNameWeneed = '';
+                                    if (obj[i].creditName) {
+                                        creditNameWeneed = obj[i].creditName;
+                                    } else {
+                                        creditNameWeneed = '无'
+                                    }
+
+                                    if (obj[i].fieldValues && obj[i].noticeDetailUrl) {
+                                        noticeDetailUrl = obj[i].noticeDetailUrl
+                                    } else {
+                                        noticeDetailUrl = ''
+                                    }
+
+                                    var newIcon = ''
+
+                                    if (time == getDay(0)) {
+                                        newIcon = '   <svg class="iconfont hot" aria-hidden="true" style="margin-top: -60px">' +
+                                            ' <use xlink:href="#icon-zuixin"></use>' +
+                                            ' </svg>'
+
+                                    } else if (time == getDay(-2) || time == getDay(-1)) {
+                                        newIcon = '<svg class="iconfont hot" aria-hidden="true" style="margin-top: -60px">' +
+                                            ' <use xlink:href="#icon-zuijin"></use>' +
+                                            ' </svg>'
+                                    } else {
+                                        newIcon = ''
+                                    }
+                                    var addtimeStr = '';
+                                    if (obj[i].noticeTime) {
+                                        addtimeStr = obj[i].noticeTime.substring(0, 10);
+                                    }
+                                    // var dataSource = '';
+                                    // if (obj[i].dataSource) {
+                                    //     dataSource = obj[i].dataSource;
+                                    // }
+                                    // 采购公告不登陆可查看  其余跳登录
+                                    htmlTr = '<li>' +
+                                        '<a href="' + obj[i].pageurl + '" target="_blank">' +
+                                        '<span class="ellipsis">' + obj[i].title + '</span>' +
+                                        '<span class="ellipsis" style="float: right !important;" >' + addtimeStr + '</span>' +
+                                        ' </a>' +
+                                        '</li>';
+                                    $(".noticeShowList").append(htmlTr);
+                                } else if (channel == 'all') {
+                                    var mentCode = '';
+                                    if (obj[i].code) {
+                                        mentCode = obj[i].code;
+                                    } else {
+                                        mentCode = '--'
+                                    }
+                                    var handleAllDepartment = '';
+                                    if (obj[i].handleDepartment) {
+                                        handleAllDepartment = obj[i].handleDepartment;
+                                    } else {
+                                        handleAllDepartment = '--'
+                                    }
+                                    // 名单类型
+                                    var typeName = '';
+                                    if (obj[i].type) {
+                                        if(productType === 'productTagJD'){
+                                            typeName = obj[i].type&&(obj[i].type=='warn'?'军队采购预警名单':obj[i].type=='suspend'?'军队采购暂停名单':obj[i].type=='breakFaith'?'军队采购失信名单':obj[i].type=='govBreakFaith'?'政府采购失信名单':'');
+                                        }else{
+                                            typeName = obj[i].type&&(obj[i].type=='warn'?'XX采购预警名单':obj[i].type=='suspend'?'XX采购暂停名单':obj[i].type=='breakFaith'?'XX采购失信名单':obj[i].type=='govBreakFaith'?'政府采购失信名单':'');
+                                        }
+
+                                    } else {
+                                        typeName = '--'
+                                    }
+                                    if(obj[i].type === 'warn' || obj[i].type === 'suspend' || obj[i].type === 'breakFaith'){
+                                        let targetHtml = 'dishonesty.html'
+                                        let type = obj[i].type
+                                        if (type === 'warn') {
+                                            targetHtml = 'warning.html'
+                                        } else if (type === 'suspend') {
+                                            targetHtml = 'suspended.html'
+                                        } else if (type === 'breakFaith') {
+                                            targetHtml = 'dishonesty.html'
+                                        }
+                                        htmlTr = '<li>' +
+                                            '<a href="/freecms/site/juncai/resources/project/'+targetHtml+'?id=' + obj[i].id + '&noticeId=' + obj[i].noticeId + '&env=' + env + '&channel=' + channel + '&dataSource=' + obj[i].dataSource + '&code=' + obj[i].code + '&originNoticeId=' + obj[i].originNoticeId + '&creditType=' + obj[i].creditType + '&type=' + obj[i].type + '&payDepositName=' + obj[i].payDepositName + '&dataStatusName=' + obj[i].dataStatusName + '&highlightClass=' + obj[i].highLightFlag + '&updatePunishDate=' + obj[i].updatePunishDate +'" target="_blank">' +
+                                            '<span class="'+ highlightClass +' ellipsis" style="width: 120px; margin-left: 20px !important;">' + mentCode + '</span>' +
+                                            '<span class="'+ highlightClass +' ellipsis" creditName="' + obj[i].creditName + '" style="width: 240px;margin-left: 20px !important;">' +
+                                            '<p class="'+ highlightClass +' ellipsis" style="display: inline-block;max-width: 240px !important;">' + obj[i].creditName + '</p></span>' +
+                                            '<span class="'+ highlightClass +' ellipsis" style="width: 290px;">' + obj[i].creditCode + '</span>' +
+                                            '<span class="'+ highlightClass +' ellipsis" style="width: 140px;">' + typeName + '</span>' +
+                                            '<span class="'+ highlightClass +' ellipsis" style="width: 140px;margin-left: 10px;">' + obj[i].startDate + '</span>' +
+                                            '<span class="'+ highlightClass +' ellipsis" style="width: 150px;">' + handleAllDepartment + '</span>' +
+                                            '</a>' +
+                                            '</li>';
+                                    }else{
+                                        htmlTr = '<li>' +
+                                            '' +
+                                            '<a href="/freecms-glht/site/juncai/jdglcxxq/index.html?id=' + obj[i].id + '&noticeId=' + obj[i].noticeId + '&env=' + env + '&channel=' + channel + '&dataSource=' + obj[i].dataSource + '&code=' + obj[i].code + '&originNoticeId=' + obj[i].originNoticeId + '&creditType=' + obj[i].creditType + '&type=' + obj[i].type + '&payDepositName=' + obj[i].payDepositName + '&dataStatusName=' + obj[i].dataStatusName + '&highlightClass=' + obj[i].highLightFlag + '&updatePunishDate=' + obj[i].updatePunishDate +'" target="_blank">' +
+                                            '<span class="'+ highlightClass +' ellipsis" style="width: 120px; margin-left: 20px !important;">' + mentCode + '</span>' +
+                                            '<span class="'+ highlightClass +' ellipsis" creditName="' + obj[i].creditName + '" style="width: 240px;margin-left: 20px !important;">' +
+                                            '<p class="'+ highlightClass +' ellipsis" style="display: inline-block;max-width: 240px !important;">' + obj[i].creditName + '</p></span>' +
+                                            '<span class="'+ highlightClass +' ellipsis" style="width: 290px;">' + obj[i].creditCode + '</span>' +
+                                            '<span class="'+ highlightClass +' ellipsis" style="width: 140px;">' + typeName + '</span>' +
+                                            '<span class="'+ highlightClass +' ellipsis" style="width: 140px;margin-left: 10px;">' + obj[i].startDate + '</span>' +
+                                            '<span class="'+ highlightClass +' ellipsis" style="width: 150px;">' + handleAllDepartment + '</span>' +
+                                            '</a>' +
+                                            '</li>';
+                                    }
+                                    $(".noticeShowList").append(htmlTr);
+                                    if (!obj[i].highLightFlag) {
+                                        $('.noticeShowList>li>span').attr('style','color: #c0c0c0 !important;');
+                                    }
+                                } else if (channel == 'govBreakFaith') {
+                                    htmlTr = '<li>' +
+                                        '' +
+                                        '<a href="/freecms-glht/site/juncai/jdglcxxq/index.html?id=' + obj[i].id + '&channel=' + channel + '&dataSource=' + obj[i].dataSource + '&originNoticeId=' + obj[i].originNoticeId + '&creditType=' + obj[i].creditType + '&type=' + obj[i].type + '&payDepositName=' + obj[i].payDepositName + '&highlightClass=' + obj[i].highLightFlag + '&updatePunishDate=' + obj[i].updatePunishDate +'" target="_blank">' +
+                                        '<span class="'+ highlightClass +' ellipsis" creditName="' + obj[i].creditName + '" style="width: 175px;margin-left: 20px !important;">' +
+                                        '<p class="'+ highlightClass +' ellipsis" style="display: inline-block;max-width: 200px !important;">' + obj[i].creditName + '</p></span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 230px;">' + obj[i].creditCode + '</span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 430px;">' +
+                                        '<p class="'+ highlightClass +' ellipsis" style="display: inline-block;max-width: 430px !important;">' + obj[i].handleResult + '</p></span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 140px;">' + obj[i].startDate + '</span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 133px;">' + handleUnitData + '</span>' +
+                                        '</a>' +
+                                        '</li>';
+                                    $(".noticeShowList").append(htmlTr);
+                                } else if (channel == 'warn') {
+                                    var mentCode = '';
+                                    if (obj[i].code) {
+                                        mentCode = obj[i].code;
+                                    } else {
+                                        mentCode = '--'
+                                    }
+                                    htmlTr = '<li>' +
+                                        '' +
+                                        '<a href="/freecms/site/juncai/resources/project/warning.html?id=' + obj[i].id + '&noticeId=' + obj[i].noticeId + '&env=' + env + '&channel=' + channel + '&dataSource=' + obj[i].dataSource + '&code=' + obj[i].code + '&originNoticeId=' + obj[i].originNoticeId + '&creditType=' + obj[i].creditType + '&type=' + obj[i].type + '&payDepositName=' + obj[i].payDepositName + '&dataStatusName=' + obj[i].dataStatusName + '&highlightClass=' + obj[i].highLightFlag + '&updatePunishDate=' + obj[i].updatePunishDate +'" target="_blank">' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 135px; margin-left: 20px !important;">' + mentCode + '</span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" creditName="' + obj[i].creditName + '" style="float: left;width: 330px;">' +
+                                        '<p class="'+ highlightClass +' ellipsis" style="display: inline-block;max-width: 350px !important;">' + obj[i].creditName + '</p></span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 350px;">' + obj[i].creditCode + '</span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 155px;">' + obj[i].startDate + '</span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 140px;">' + handleUnitData + '</span>' +
+                                        '</a>' +
+                                        '</li>';
+                                    $(".noticeShowList").append(htmlTr);
+                                } else if (channel == 'suspend') {
+                                    var mentCode = '';
+                                    if (obj[i].code) {
+                                        mentCode = obj[i].code;
+                                    } else {
+                                        mentCode = '--'
+                                    }
+                                    htmlTr = '<li>' +
+                                        '' +
+                                        '<a href="/freecms/site/juncai/resources/project/suspended.html?id=' + obj[i].id + '&noticeId=' + obj[i].noticeId + '&env=' + env + '&channel=' + channel + '&dataSource=' + obj[i].dataSource + '&code=' + obj[i].code + '&originNoticeId=' + obj[i].originNoticeId + '&creditType=' + obj[i].creditType + '&type=' + obj[i].type + '&payDepositName=' + obj[i].payDepositName + '&dataStatusName=' + obj[i].dataStatusName + '&highlightClass=' + obj[i].highLightFlag + '&updatePunishDate=' + obj[i].updatePunishDate +'" target="_blank">' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 135px; margin-left: 20px !important;">' + mentCode + '</span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" creditName="' + obj[i].creditName + '" style="width: 250px;">' +
+                                        '<p class="'+ highlightClass +' ellipsis" style="display: inline-block;max-width: 250px !important;">' + obj[i].creditName + '</p></span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 250px;">' + obj[i].creditCode + '</span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 180px;">' + obj[i].handleScope + '</span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 140px;margin-left: 10px;">' + obj[i].startDate + '</span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 150px;">' + handleUnitData + '</span>' +
+                                        '</a>' +
+                                        '</li>';
+                                    $(".noticeShowList").append(htmlTr);
+                                } else if (channel =='breakFaith') {
+                                    console.log(obj, 'obj')
+                                    var mentCode = '';
+                                    if (obj[i].code) {
+                                        mentCode = obj[i].code;
+                                    } else {
+                                        mentCode = '--'
+                                    }
+                                    htmlTr = '<li>' +
+                                        '' +
+                                        '<a href="/freecms/site/juncai/resources/project/dishonesty.html?id=' + obj[i].id + '&noticeId=' + obj[i].noticeId + '&env=' + env + '&channel=' + channel + '&dataSource=' + obj[i].dataSource + '&code=' + obj[i].code + '&originNoticeId=' + obj[i].originNoticeId + '&creditType=' + obj[i].creditType + '&type=' + obj[i].type + '&payDepositName=' + obj[i].payDepositName + '&dataStatusName=' + obj[i].dataStatusName + '&highlightClass=' + obj[i].highLightFlag + '&updatePunishDate=' + obj[i].updatePunishDate +'" target="_blank">' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 120px; margin-left: 20px !important;">' + mentCode + '</span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 170px; margin-left: 20px !important;">' +
+                                        '<p class="'+ highlightClass +' ellipsis" style="display: inline-block;max-width: 170px !important;">' + obj[i].creditName + '</p></span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 180px;">' + obj[i].creditCode + '</span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 100px;margin-left: 25px;">' +
+                                        '<p class="'+ highlightClass +' ellipsis" style="display: inline-block;max-width: 100px !important;">' + obj[i].handleResult + '</p></span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 130px;margin-left: 5px;">' + obj[i].handleScope + '</span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 130px;padding-left: 20px;">' + obj[i].breedCategory + '</span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 110px;">' + obj[i].startDate + '</span>' +
+                                        '<span class="'+ highlightClass +' ellipsis" style="width: 100px;">' + handleDepartmentData + '</span>' +
+                                        '</a>' +
+                                        '</li>';
+                                    $(".noticeShowList").append(htmlTr);
+                                }
+                            }
+                            $("#pagination").show();
+                        } else {
+                            if (channel == 'ad1a7596-65eb-48b4-909f-11679731ae94' || channel == 'e917a5c3-39a0-4bda-ae7f-8e4cbe880b71') {
+                                $(".noticeShowList").append('<p style="text-align: center;margin-top: 40px;">暂无数据</p>');
+                            } else {
+                                if (res.data&&res.data.queryInfo.queryString) {
+                                    if(res.data.information.tip) {
+                                        var newStr = res.data.information.tip.replace(/\r\n/g, "<br>")+res.data.queryInfo.queryString.replace(/\r\n/g, "<br>");
+                                        $(".noticeShowList").append('<p style="text-align: center; margin-top: 40px; color: red;">' + newStr + '</p>');
+                                    } else {
+                                        var newStr = res.data.queryInfo.queryString.replace(/\r\n/g, "<br>");
+                                        $(".noticeShowList").append('<p style="text-align: center; margin-top: 40px; color: red;">没有查询到相关记录<br/>' + newStr + '</p>');
+                                    }
+                                } else {
+                                    $(".noticeShowList").append('<p style="text-align: center;margin-top: 40px;">暂无数据</p>');
+                                }
+                            }
+                            $("#pagination").hide();
+                        }
+                    } else {
+                        $('#loadingMask').hide();
+                        $(".noticeShowList").empty();
+                        $(".noticeShowList").append('<p style="text-align: center;margin-top: 40px;">加载失败，请重试！</p>');
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    // 处理错误的逻辑...
+                    // 关闭遮罩层
+                    $('#loadingMask').hide();
+                    $(".noticeShowList").empty();
+                    $(".noticeShowList").append('<p style="text-align: center;margin-top: 40px;">加载失败，请重试！</p>');
+                }
+            });
+        }
+    });
+</script>
+<style>
+    .searchJdJcBox .layui-form-label {
+        width: 130px !important;
+    }
+    .sonChannelDiv{
+        margin: 15px 15px 15px 0px;
+        display:inline-block;
+        /*width: 176px;*/
+        width: 145px;
+        height: 101px;
+        border-radius: 8px;
+        cursor: pointer;
+        border-radius: 8px;
+    }
+    .sonChannelDiv .iconfont{
+        display: inline-block; /* 保证背景能够应用到文本上 */
+        font-size: 40px;
+        position: relative;
+        top: 15px;
+        /*left: 65px;*/
+        left: 55px;
+        -webkit-background-clip: text; /* 限制背景仅在文本范围内显示 */
+        background-clip: text;
+        color: transparent;  /* 使文本颜色透明，这样渐变就能透过文本显示 */
+    }
+    /*.actived{*/
+    /*    color: #FFF;*/
+    /*    opacity: 1;*/
+    /*}*/
+    /*.actived .sonChannelImg{*/
+    /*    color: #FFF;*/
+    /*}*/
+    .actived .sonChannelSpan{
+        color: #FFF !important;
+    }
+    .sonChannelImg{
+        display: block;
+        margin: 16px 0px 8px 53px;
+        width: 40px;
+        height: 40px;
+    }
+    .sonChannelSpan{
+        display: inline-block;
+        font-weight: 700;
+        font-size: 16px;
+        color: #000;
+        text-align: center;
+        /*width: 177px;*/
+        width: 145px;
+        margin-top: 20px !important;
+    }
+    /*.noticeShowList li:before{*/
+    /*content: ' ';*/
+    /*position: relative;*/
+    /*top: 24px;*/
+    /*display: inline-block;*/
+    /*float: left;*/
+    /*width: 5px;*/
+    /*height: 5px;*/
+    /*background: #dcdfe6;*/
+    /*border-radius: 3px;*/
+    /*}*/
+    .noticeShowList li span {
+        float: left !important;
+        text-align: left !important;
+    }
+    .noticeShowList li span:nth-of-type(1){
+        margin-left: 6px !important;
+    }
+    .noticeTypeKindQB{
+        display: none;
+    }
+    .noticeTypeKind{
+        display: none;
+    }
+    .noticeTypeActived{
+        display: block;
+    }
+    .noticeShowLabels {
+        width: 96%;
+        height: 48px;
+        /*background: #DB3B40;*/
+        background: #2461b1;
+        /*margin-top: 14px;*/
+        border-radius: 8px;
+    }
+    .noticeShowLabels span {
+        display: inline-block;
+        font-size: 16px;
+        text-align: left;
+        color: #ffffff;
+        line-height: 48px;
+    }
+    .searchJdJcBox .layui-input-block, .searchJdJcBox .layui-row .layui-input-inline {
+        width: 205px !important;
+    }
+    #loadingMask {
+        /*position: fixed;*/
+        position: relative;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.5);
+        /*background-color: rgba(0,0,0,0.5); !* 半透明黑色背景 *!*/
+        z-index: 9999; /* 确保遮罩层在最上层 */
+        display: none; /* 默认隐藏 */
+    }
+    #loadingText {
+        position: absolute;
+        top: 35%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        /*color: #000000;*/
+        font-size: 18px;
+    }
+    .searchBoxJdjcBottom {
+        margin-top: 20px;
+        padding: 20px;
+        background: #fff;
+        box-shadow: 0 0 8px 0 rgba(17,80,225,0.20);
+        border-radius: 8px;
+        height: auto;
+        overflow: hidden;
+    }
+    .colorClass {
+        color: #c0c0c0 !important;
+    }
+</style>
+

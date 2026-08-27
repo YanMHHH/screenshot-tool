@@ -25,17 +25,19 @@
       "output": "release"
     },
     "files": [
-      "main.js",
-      "native-session.js",
-      "license.js",
-      "license-public-key.js",
-      "preload.js",
+      "*.js",
+      "!*.test.js",
       "../app/**/*",
       "package.json"
     ],
+    "win": {
+      "target": ["nsis"]
+    },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     }
   }
 }

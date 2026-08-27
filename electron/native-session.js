@@ -76,13 +76,49 @@ async function captureWindowsTaskbar() {
 }
 
 function findBrowser() {
+  // 1. 检查环境变量
+  if (process.env.EDGE_EXE && fs.existsSync(process.env.EDGE_EXE)) {
+    return process.env.EDGE_EXE;
+  }
+
+  // 2. 尝试从注册表读取 Chrome 路径
+  try {
+    const chromeRegKey = 'HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chrome.exe';
+    const chromePathCmd = `reg query "${chromeRegKey}" /ve`;
+    const output = childProcess.execSync(chromePathCmd, { encoding: 'utf8', windowsHide: true });
+    const match = output.match(/REG_SZ\s+(.+\.exe)/i);
+    if (match && fs.existsSync(match[1].trim())) {
+      return match[1].trim();
+    }
+  } catch (e) {
+    // Chrome 未安装或注册表读取失败
+  }
+
+  // 3. 尝试从注册表读取 Edge 路径
+  try {
+    const edgeRegKey = 'HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\msedge.exe';
+    const edgePathCmd = `reg query "${edgeRegKey}" /ve`;
+    const output = childProcess.execSync(edgePathCmd, { encoding: 'utf8', windowsHide: true });
+    const match = output.match(/REG_SZ\s+(.+\.exe)/i);
+    if (match && fs.existsSync(match[1].trim())) {
+      return match[1].trim();
+    }
+  } catch (e) {
+    // Edge 未安装或注册表读取失败
+  }
+
+  // 4. 回退到硬编码路径
   const candidates = [
-    process.env.EDGE_EXE,
     'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
     'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
     'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe'
+    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+    // 添加用户本地安装路径
+    process.env.LOCALAPPDATA + '\\Google\\Chrome\\Application\\chrome.exe',
+    process.env.ProgramFiles + '\\Google\\Chrome\\Application\\chrome.exe',
+    process.env.ProgramFiles + '\\Microsoft\\Edge\\Application\\msedge.exe'
   ];
+
   return candidates.find((candidate) => candidate && fs.existsSync(candidate));
 }
 
@@ -143,6 +179,7 @@ class NativeSession {
     this.nextId = 0;
     this.pending = new Map();
     this.recentResponses = [];
+    this.completedLoaders = new Set();
   }
 
   async start(url, { allowUntitledPage = false } = {}) {
@@ -156,11 +193,13 @@ class NativeSession {
       `--user-data-dir=${this.profileDir}`,
       '--no-first-run',
       '--no-default-browser-check',
-      '--disable-infobars',
+      '--disable-blink-features=AutomationControlled',  // 移除 navigator.webdriver
       '--disable-backgrounding-occluded-windows',
       '--disable-renderer-backgrounding',
       '--disable-background-timer-throttling',
       '--disable-features=CalculateNativeWinOcclusion',
+      '--disable-site-isolation-trials',
+      '--disable-dev-shm-usage',
       '--window-position=-32000,-32000',
       '--window-size=1440,900',
       '--force-device-scale-factor=1',
@@ -172,6 +211,7 @@ class NativeSession {
     const target = await this.waitForPage(url, 90_000, allowUntitledPage);
     await this.connect(target.webSocketDebuggerUrl);
     await this.command('Page.enable');
+    await this.command('Page.setLifecycleEventsEnabled', { enabled: true });
     await this.command('Runtime.enable');
     await this.command('Network.enable');
     this.log('原生浏览器会话已就绪');
@@ -232,6 +272,10 @@ class NativeSession {
           if (this.recentResponses.length > 100) this.recentResponses.splice(0, this.recentResponses.length - 100);
         }
       }
+      if (message.method === 'Page.lifecycleEvent' && message.params?.name === 'load' && message.params.loaderId) {
+        this.completedLoaders.add(message.params.loaderId);
+        if (this.completedLoaders.size > 50) this.completedLoaders.delete(this.completedLoaders.values().next().value);
+      }
       if (!message.id) return;
       const pending = this.pending.get(message.id);
       if (!pending) return;
@@ -245,11 +289,20 @@ class NativeSession {
     });
   }
 
-  command(method, params = {}) {
+  command(method, params = {}, timeoutMs = 45_000) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return Promise.reject(new Error('浏览器调试通道不可用'));
     const id = ++this.nextId;
     this.ws.send(JSON.stringify({ id, method, params }));
-    return new Promise((resolve, reject) => this.pending.set(id, { resolve, reject }));
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        if (!this.pending.delete(id)) return;
+        reject(new Error(`浏览器操作超时：${method}`));
+      }, timeoutMs);
+      this.pending.set(id, {
+        resolve: (result) => { clearTimeout(timer); resolve(result); },
+        reject: (error) => { clearTimeout(timer); reject(error); }
+      });
+    });
   }
 
   async evaluate(fn, arg) {
@@ -271,9 +324,41 @@ class NativeSession {
     return { page, responses: this.recentResponses.slice(-30) };
   }
 
+  async waitForDocumentReady(expectedUrl, loaderId, timeoutMs = 30_000) {
+    const deadline = Date.now() + timeoutMs;
+    const expected = new URL(expectedUrl);
+    let stableCount = 0;
+    let lastState = '';
+    while (Date.now() < deadline) {
+      const state = await this.evaluate(() => {
+        const body = document.body;
+        const style = body ? getComputedStyle(body) : null;
+        const rect = body?.getBoundingClientRect();
+        return {
+          readyState: document.readyState,
+          visible: Boolean(rect && rect.width > 0 && rect.height > 0 && style?.display !== 'none' && style?.visibility !== 'hidden'),
+          title: document.title || '',
+          url: location.href
+        };
+      });
+      const current = new URL(state.url);
+      const arrived = current.origin === expected.origin && current.pathname === expected.pathname;
+      lastState = `${state.readyState}/${state.title}/${state.url}`;
+      const loaded = !loaderId || this.completedLoaders.has(loaderId);
+      if (arrived && loaded && state.readyState === 'complete' && state.visible) {
+        stableCount += 1;
+        if (stableCount >= 2) return { ok: true };
+      } else stableCount = 0;
+      await sleep(300);
+    }
+    return { ok: false, reason: `页面在 ${Math.round(timeoutMs / 1000)} 秒内未完成加载（${lastState || '无页面状态'}）` };
+  }
+
   async navigate(url) {
-    await this.command('Page.navigate', { url });
-    await sleep(1200);
+    const navigation = await this.command('Page.navigate', { url });
+    if (navigation.errorText) throw new Error(`页面导航失败：${navigation.errorText}`);
+    const ready = await this.waitForDocumentReady(url, navigation.loaderId);
+    if (!ready.ok) throw new Error(ready.reason);
   }
 
   async screenshotElement(selector) {

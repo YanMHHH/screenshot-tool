@@ -3,7 +3,11 @@
     "allow": [
       "WebSearch",
       "WebFetch(domain:yb.tencent.com)",
-      "WebFetch(domain:www.creditchina.gov.cn)"
+      "WebFetch(domain:www.creditchina.gov.cn)",
+      "Bash(npm install *)",
+      "Bash(npm start *)",
+      "Bash(node -e \"require\\('./signer'\\); require\\('./main'\\);\")",
+      "Bash(node -e \"require\\('./signer'\\)\")"
     ]
   }
 }

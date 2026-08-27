@@ -8,6 +8,26 @@ const DdddOcr = require('ddddocr').default;
 const { PNG } = require('pngjs');
 const { NativeSession, sleep } = require('./native-session');
 const { createLicenseStore, LICENSE_EXTENSION } = require('./license');
+const {
+  humanClick,
+  humanType,
+  randomDelay,
+  waitForElementReady,
+  waitForPageLoad,
+  randomScroll,
+  randomMouseMove,
+  naturalPageDwell,
+  detectAnomalies,
+  checkPageHealth,
+  retryWithBackoff
+} = require('./human-behavior');
+const {
+  injectAntiDetectionScript,
+  robustNavigate,
+  prepareForInteraction,
+  waitForQueryResult,
+  handlePageAnomalies
+} = require('./query-helpers');
 
 const SITE_CATALOG = {
   'W-001': {
@@ -110,6 +130,30 @@ async function waitBeforeRetry(notify, attempt, label) {
   const delay = retryDelay(attempt);
   notify(`${label}，${Math.ceil(delay / 1000)} 秒后重试`);
   await wait(delay);
+}
+async function waitForInteractiveControls(session, selectors, keys, siteName, timeoutMs = 30_000) {
+  const deadline = Date.now() + timeoutMs;
+  let stableCount = 0;
+  let unavailable = [];
+  while (Date.now() < deadline) {
+    const state = await session.evaluate(({ selectors: selectorMap, keys: required }) => {
+      const controls = required.map((key) => {
+        const element = document.querySelector(selectorMap[key]);
+        const style = element ? getComputedStyle(element) : null;
+        const rect = element?.getBoundingClientRect();
+        const ready = Boolean(element && rect && rect.width > 0 && rect.height > 0 && style?.display !== 'none' && style?.visibility !== 'hidden' && !element.matches(':disabled'));
+        return { key, ready };
+      });
+      return { ready: controls.every((control) => control.ready), unavailable: controls.filter((control) => !control.ready).map((control) => control.key) };
+    }, { selectors, keys });
+    unavailable = state.unavailable;
+    if (state.ready) {
+      stableCount += 1;
+      if (stableCount >= 2) return { ok: true };
+    } else stableCount = 0;
+    await sleep(350);
+  }
+  return { ok: false, reason: `${siteName}查询控件在 ${Math.round(timeoutMs / 1000)} 秒内未就绪：${unavailable.join('、') || '未知控件'}` };
 }
 function getOcr() { if (!ocrPromise) ocrPromise = DdddOcr.create(); return ocrPromise; }
 function safeName(value) { return String(value).replace(/[\\/:*?"<>|]/g, '_').trim(); }
@@ -236,17 +280,45 @@ async function zipFolder(folder, project) {
 }
 
 async function nativeFillAndSubmit(session, company) {
-  return session.evaluate(({ company: name, selectors }) => {
-    const field = document.querySelector(selectors.search);
-    const submit = document.querySelector(selectors.submit);
-    if (!field || !submit) return { ok: false, reason: '未找到查询控件，页面结构可能已变更' };
-    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
-    setter ? setter.call(field, name) : (field.value = name);
-    field.dispatchEvent(new Event('input', { bubbles: true }));
-    field.dispatchEvent(new Event('change', { bubbles: true }));
-    submit.click();
-    return { ok: true };
-  }, { company, selectors: CREDIT_CHINA_SELECTORS });
+  // 等待搜索框就绪
+  const searchReady = await prepareForInteraction(session, CREDIT_CHINA_SELECTORS.search, {
+    timeout: 15000,
+    scrollIntoView: true,
+    addNaturalDelay: true
+  });
+
+  if (!searchReady.ok) {
+    return { ok: false, reason: `搜索框未就绪: ${searchReady.reason}` };
+  }
+
+  // 使用人类化输入
+  const typeResult = await humanType(session, CREDIT_CHINA_SELECTORS.search, company, {
+    minDelay: 80,
+    maxDelay: 200,
+    mistakes: false
+  });
+
+  if (!typeResult.ok) return typeResult;
+
+  // 输入后的思考时间
+  await randomDelay(300, 600);
+
+  // 等待提交按钮就绪
+  const submitReady = await prepareForInteraction(session, CREDIT_CHINA_SELECTORS.submit, {
+    timeout: 10000,
+    scrollIntoView: false,
+    addNaturalDelay: false
+  });
+
+  if (!submitReady.ok) {
+    return { ok: false, reason: `提交按钮未就绪: ${submitReady.reason}` };
+  }
+
+  // 使用人类化点击提交
+  return humanClick(session, CREDIT_CHINA_SELECTORS.submit, {
+    delayBefore: [200, 400],
+    delayAfter: [300, 600]
+  });
 }
 
 async function nativeCaptchaState(session) {
@@ -350,16 +422,26 @@ async function captureCaptchaPopup(session) {
 }
 
 async function refreshCaptchaInPlace(session) {
-  const result = await session.evaluate((selectors) => {
+  // 检查验证码弹窗状态
+  const checkResult = await session.evaluate((selectors) => {
     const popup = document.querySelector(selectors.captchaPopup);
     const refresh = document.querySelector(selectors.captchaRefresh);
     const visible = popup && getComputedStyle(popup).display !== 'none' && getComputedStyle(popup).visibility !== 'hidden';
     if (!visible) return { ok: false, reason: '验证码弹窗已关闭' };
     if (!refresh || getComputedStyle(refresh).display === 'none' || getComputedStyle(refresh).visibility === 'hidden') return { ok: false, reason: '未找到可用的验证码刷新控件' };
-    refresh.click();
     return { ok: true };
   }, CREDIT_CHINA_SELECTORS);
-  if (!result.ok) return result;
+
+  if (!checkResult.ok) return checkResult;
+
+  // 使用人类化点击刷新按钮
+  const clickResult = await humanClick(session, CREDIT_CHINA_SELECTORS.captchaRefresh, {
+    delayBefore: [200, 500],
+    delayAfter: [400, 800]
+  });
+
+  if (!clickResult.ok) return clickResult;
+
   await sleep(900);
   const state = await waitForCaptcha(session, 8000);
   return state.visible ? { ok: true, method: 'refresh' } : { ok: false, reason: state.challenge ? '刷新验证码后页面进入安全检查' : '刷新验证码后弹窗已关闭' };
@@ -368,7 +450,11 @@ async function refreshCaptchaInPlace(session) {
 async function requestFreshCaptcha(session, company, query) {
   const refreshed = await refreshCaptchaInPlace(session);
   if (refreshed.ok) return refreshed;
-  await session.evaluate((selectors) => document.querySelector(selectors.captchaCancel)?.click(), CREDIT_CHINA_SELECTORS);
+  // 使用人类化点击取消按钮
+  await humanClick(session, CREDIT_CHINA_SELECTORS.captchaCancel, {
+    delayBefore: [150, 300],
+    delayAfter: [400, 700]
+  });
   await sleep(700);
   await session.navigate(query.url);
   const filled = await nativeFillAndSubmit(session, company);
@@ -416,17 +502,30 @@ async function solveCaptchaIfNeeded(session, company, query, captchaRetry, folde
         await saveCaptchaDiagnostic(folder, company, query, ocrAttempt, diagnostic, imageResult.image, notify);
       } else {
         notify(`验证码 OCR 识别成功：${code}（多版本投票一致）`);
-        const submitted = await session.evaluate(({ value, selectors }) => {
-        const field = document.querySelector(selectors.captchaInput);
-        const confirm = document.querySelector(selectors.captchaConfirm);
-        if (!field || !confirm) return { ok: false, reason: '未找到验证码输入或确认控件' };
-        const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
-        setter ? setter.call(field, value) : (field.value = value);
-        field.dispatchEvent(new Event('input', { bubbles: true }));
-        field.dispatchEvent(new Event('change', { bubbles: true }));
-        confirm.click();
-        return { ok: true };
-        }, { value: code, selectors: CREDIT_CHINA_SELECTORS });
+        // 使用人类化输入验证码
+        const typeResult = await humanType(session, CREDIT_CHINA_SELECTORS.captchaInput, code, {
+          minDelay: 100,
+          maxDelay: 250,
+          mistakes: false
+        });
+
+        if (!typeResult.ok) {
+          lastReason = `验证码输入失败：${typeResult.reason}`;
+          diagnostic.reason = lastReason;
+          diagnostic.submitted = false;
+          await saveCaptchaDiagnostic(folder, company, query, ocrAttempt, diagnostic, imageResult.image, notify);
+          continue;
+        }
+
+        // 输入后随机思考时间
+        await randomDelay(400, 800);
+
+        // 使用人类化点击确认按钮
+        const submitted = await humanClick(session, CREDIT_CHINA_SELECTORS.captchaConfirm, {
+          delayBefore: [200, 500],
+          delayAfter: [300, 600]
+        });
+
         diagnostic.submitted = submitted.ok;
         if (!submitted.ok) {
           lastReason = `验证码未提交：${submitted.reason}`;
@@ -508,6 +607,8 @@ async function runCreditChinaOne(session, company, query, settings, captureMode,
     try {
       notify(`正在查询${query.name}${attempt > 1 ? `（第 ${attempt}/${settings.siteRetry} 次）` : ''}`);
       await session.navigate(query.url);
+      const ready = await waitForInteractiveControls(session, CREDIT_CHINA_SELECTORS, ['search', 'submit'], '信用中国');
+      if (!ready.ok) throw new Error(ready.reason);
       const filled = await nativeFillAndSubmit(session, company);
       if (!filled.ok) return { status: '页面结构异常', reason: filled.reason };
       const captcha = await solveCaptchaIfNeeded(session, company, query, settings.captchaRetry, folder, notify);
@@ -526,6 +627,7 @@ async function runCreditChinaOne(session, company, query, settings, captureMode,
     } catch (error) {
       if (taskStopped) throw error;
       lastError = error.message;
+      await saveSiteDiagnostic(session, folder, company, query, lastError, notify);
       if (attempt < settings.siteRetry) await waitBeforeRetry(notify, attempt, `查询异常：${lastError}`);
     }
   }
@@ -589,28 +691,42 @@ async function fillCourtCompany(session, company) {
 }
 
 async function submitCourtQuery(session, code) {
-  return session.evaluate(({ value, selectors }) => {
-    const field = document.querySelector(selectors.captchaInput);
-    const submit = document.querySelector(selectors.submit);
-    if (!field || !submit) return { ok: false, reason: '未找到验证码输入框或查询按钮，页面结构可能已变更' };
-    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
-    setter ? setter.call(field, value) : (field.value = value);
-    field.dispatchEvent(new Event('input', { bubbles: true }));
-    field.dispatchEvent(new Event('change', { bubbles: true }));
-    submit.click();
-    return { ok: true };
-  }, { value: code, selectors: COURT_SHIXIN_SELECTORS });
+  // 使用人类化输入验证码
+  const typeResult = await humanType(session, COURT_SHIXIN_SELECTORS.captchaInput, code, {
+    minDelay: 100,
+    maxDelay: 250,
+    mistakes: false
+  });
+
+  if (!typeResult.ok) return typeResult;
+
+  // 输入后随机思考时间
+  await randomDelay(300, 600);
+
+  // 使用人类化点击提交按钮
+  return humanClick(session, COURT_SHIXIN_SELECTORS.submit, {
+    delayBefore: [200, 400],
+    delayAfter: [300, 600]
+  });
 }
 
 async function refreshCourtCaptcha(session) {
-  const refreshed = await session.evaluate((selectors) => {
+  // 检查验证码图片是否存在
+  const checkResult = await session.evaluate((selectors) => {
     const image = document.querySelector(selectors.captchaImage);
-    if (!image) return false;
-    image.click();
-    return true;
+    return image ? { ok: true } : { ok: false };
   }, COURT_SHIXIN_SELECTORS);
-  if (refreshed) await sleep(900);
-  return refreshed;
+
+  if (!checkResult.ok) return false;
+
+  // 使用人类化点击刷新验证码图片
+  const clickResult = await humanClick(session, COURT_SHIXIN_SELECTORS.captchaImage, {
+    delayBefore: [200, 500],
+    delayAfter: [400, 900]
+  });
+
+  if (clickResult.ok) await sleep(900);
+  return clickResult.ok;
 }
 
 async function waitForCourtResult(session, company, timeoutMs = 30000) {
@@ -643,6 +759,8 @@ async function waitForCourtResult(session, company, timeoutMs = 30000) {
 
 async function runCourtShixinOne(session, company, query, settings, captureMode, notify, folder) {
   await session.navigate(query.url);
+  const ready = await waitForInteractiveControls(session, COURT_SHIXIN_SELECTORS, ['search'], '中国执行信息公开网');
+  if (!ready.ok) return { status: '页面结构异常', reason: ready.reason };
   const filled = await fillCourtCompany(session, company);
   if (!filled.ok) return { status: '页面结构异常', reason: filled.reason };
   let lastReason = '验证码未通过';
@@ -683,22 +801,34 @@ async function runCourtShixinOne(session, company, query, settings, captureMode,
 
 async function waitForCcgpgPage(session, timeoutMs = 30000) {
   const deadline = Date.now() + timeoutMs;
+  let stableCount = 0;
+  let unavailable = [];
   while (Date.now() < deadline) {
     const state = await session.evaluate((selectors) => {
       const frame = document.querySelector(selectors.frame);
       const doc = frame?.contentDocument;
+      const visible = (element) => {
+        const style = element ? getComputedStyle(element) : null;
+        const rect = element?.getBoundingClientRect();
+        return Boolean(element && rect && rect.width > 0 && rect.height > 0 && style?.display !== 'none' && style?.visibility !== 'hidden' && !element.matches(':disabled'));
+      };
       return {
-        frameReady: Boolean(frame && doc),
-        inputReady: Boolean(doc?.querySelector(selectors.search)),
-        formReady: Boolean(doc?.querySelector(selectors.form)),
-        submitReady: Boolean(doc?.querySelector(selectors.submit)),
-        tableReady: Boolean(doc?.querySelector(selectors.resultTable))
+        frameReady: visible(frame) && Boolean(doc?.body),
+        inputReady: visible(doc?.querySelector(selectors.search)),
+        formReady: visible(doc?.querySelector(selectors.form)),
+        submitReady: visible(doc?.querySelector(selectors.submit)),
+        tableReady: visible(doc?.querySelector(selectors.resultTable)),
+        documentReady: doc?.readyState === 'complete'
       };
     }, CCGP_CR_SELECTORS);
-    if (state.frameReady && state.inputReady && state.formReady && state.submitReady && state.tableReady) return { ok: true };
-    await sleep(500);
+    unavailable = Object.entries(state).filter(([, ready]) => !ready).map(([name]) => name);
+    if (!unavailable.length) {
+      stableCount += 1;
+      if (stableCount >= 2) return { ok: true };
+    } else stableCount = 0;
+    await sleep(350);
   }
-  return { ok: false, reason: '中国政府采购网查询 iframe 在 30 秒内未完成加载' };
+  return { ok: false, reason: `中国政府采购网查询 iframe 在 30 秒内未完成加载：${unavailable.join('、') || '未知状态'}` };
 }
 
 async function fillAndSubmitCcgpg(session, company) {
@@ -781,6 +911,7 @@ async function runCcgpgOne(session, company, query, settings, captureMode, notif
     } catch (error) {
       if (taskStopped) throw error;
       lastError = error.message;
+      await saveSiteDiagnostic(session, folder, company, query, lastError, notify);
       if (attempt < settings.siteRetry) await waitBeforeRetry(notify, attempt, `中国政府采购网查询异常：${lastError}`);
     }
   }
@@ -788,29 +919,30 @@ async function runCcgpgOne(session, company, query, settings, captureMode, notif
 }
 
 async function waitForPlapPage(session, timeoutMs = 30000) {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const state = await session.evaluate((selectors) => ({
-      searchReady: Boolean(document.querySelector(selectors.search)),
-      submitReady: Boolean(document.querySelector(selectors.submit)),
-      listReady: Boolean(document.querySelector(selectors.resultList)),
-      suspendReady: Boolean(document.querySelector(`${selectors.listCard}[codes="suspend"]`)),
-      breakFaithReady: Boolean(document.querySelector(`${selectors.listCard}[codes="breakFaith"]`))
-    }), PLAP_PUNISH_SELECTORS);
-    if (state.searchReady && state.submitReady && state.listReady && state.suspendReady && state.breakFaithReady) return { ok: true };
-    await sleep(500);
-  }
-  return { ok: false, reason: '军队采购网查询控件在 30 秒内未完成加载' };
+  return waitForInteractiveControls(session, {
+    ...PLAP_PUNISH_SELECTORS,
+    suspendCard: `${PLAP_PUNISH_SELECTORS.listCard}[codes="suspend"]`,
+    breakFaithCard: `${PLAP_PUNISH_SELECTORS.listCard}[codes="breakFaith"]`
+  }, ['search', 'submit', 'resultList', 'suspendCard', 'breakFaithCard'], '军队采购网', timeoutMs);
 }
 
 async function selectPlapList(session, listCode, timeoutMs = 70000) {
-  const selected = await session.evaluate(({ code, selectors }) => {
+  // 检查名单卡片是否存在
+  const checkResult = await session.evaluate(({ code, selectors }) => {
     const card = document.querySelector(`${selectors.listCard}[codes="${code}"]`);
     if (!card) return { ok: false, reason: `未找到军队采购${code === 'suspend' ? '暂停' : '失信'}名单入口` };
-    card.click();
     return { ok: true };
   }, { code: listCode, selectors: PLAP_PUNISH_SELECTORS });
-  if (!selected.ok) return selected;
+
+  if (!checkResult.ok) return checkResult;
+
+  // 使用人类化点击选择名单
+  const clickResult = await humanClick(session, `${PLAP_PUNISH_SELECTORS.listCard}[codes="${listCode}"]`, {
+    delayBefore: [200, 500],
+    delayAfter: [300, 700]
+  });
+
+  if (!clickResult.ok) return clickResult;
 
   const deadline = Date.now() + timeoutMs;
   let latest = {};
@@ -838,17 +970,23 @@ async function selectPlapList(session, listCode, timeoutMs = 70000) {
 }
 
 async function fillAndSubmitPlap(session, company) {
-  return session.evaluate(({ value, selectors }) => {
-    const field = document.querySelector(selectors.search);
-    const submit = document.querySelector(selectors.submit);
-    if (!field || !submit) return { ok: false, reason: '未找到军队采购网关键字输入框或查询按钮，页面结构可能已变更' };
-    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
-    setter ? setter.call(field, value) : (field.value = value);
-    field.dispatchEvent(new Event('input', { bubbles: true }));
-    field.dispatchEvent(new Event('change', { bubbles: true }));
-    submit.click();
-    return { ok: true };
-  }, { value: company, selectors: PLAP_PUNISH_SELECTORS });
+  // 使用人类化输入企业名称
+  const typeResult = await humanType(session, PLAP_PUNISH_SELECTORS.search, company, {
+    minDelay: 80,
+    maxDelay: 200,
+    mistakes: false
+  });
+
+  if (!typeResult.ok) return typeResult;
+
+  // 输入后随机思考时间
+  await randomDelay(300, 600);
+
+  // 使用人类化点击提交按钮
+  return humanClick(session, PLAP_PUNISH_SELECTORS.submit, {
+    delayBefore: [200, 400],
+    delayAfter: [300, 600]
+  });
 }
 
 async function waitForPlapResult(session, company, timeoutMs = 70000) {
@@ -916,17 +1054,7 @@ async function runPlapPunishOne(session, company, query, settings, captureMode, 
 }
 
 async function waitForPcczPage(session, timeoutMs = 30000) {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const state = await session.evaluate((selectors) => ({
-      formReady: Boolean(document.querySelector(selectors.form)),
-      searchReady: Boolean(document.querySelector(selectors.search)),
-      submitReady: Boolean(document.querySelector(selectors.submit))
-    }), PCCZ_SELECTORS);
-    if (state.formReady && state.searchReady && state.submitReady) return { ok: true };
-    await sleep(500);
-  }
-  return { ok: false, reason: '全国企业破产重整案件信息网查询控件在 30 秒内未完成加载' };
+  return waitForInteractiveControls(session, PCCZ_SELECTORS, ['form', 'search', 'submit'], '全国企业破产重整案件信息网', timeoutMs);
 }
 
 async function fillAndSubmitPccz(session, company) {
@@ -1143,8 +1271,99 @@ app.on('second-instance', () => {
   if (mainWindow) { if (mainWindow.isMinimized()) mainWindow.restore(); mainWindow.focus(); }
 });
 
-app.whenReady().then(() => {
-  createWindow();
+/**
+ * 检查系统要求
+ * @returns {Array} 问题列表
+ */
+async function checkSystemRequirements() {
+  const issues = [];
+
+  // 检查浏览器
+  try {
+    const { NativeSession } = require('./native-session');
+    const testSession = new NativeSession(() => {});
+    const browser = testSession.browserPath;
+
+    if (!browser) {
+      issues.push({
+        severity: 'error',
+        message: '未找到 Chrome 或 Edge 浏览器',
+        solution: '请安装 Google Chrome 或 Microsoft Edge 浏览器\n下载地址:\nChrome: https://www.google.com/chrome/\nEdge: https://www.microsoft.com/edge'
+      });
+    }
+  } catch (e) {
+    issues.push({
+      severity: 'error',
+      message: '浏览器检测失败',
+      solution: `错误详情: ${e.message}`
+    });
+  }
+
+  // 检查 PowerShell
+  try {
+    childProcess.execSync('powershell -Command "Get-Host"', { windowsHide: true, timeout: 5000 });
+  } catch (e) {
+    issues.push({
+      severity: 'warning',
+      message: 'PowerShell 不可用或受限',
+      solution: '某些功能可能受限，建议检查 PowerShell 执行策略'
+    });
+  }
+
+  // 检查写入权限
+  try {
+    const testDir = path.join(app.getPath('userData'), '.test');
+    await fs.mkdir(testDir, { recursive: true });
+    await fs.rmdir(testDir);
+  } catch (e) {
+    issues.push({
+      severity: 'error',
+      message: '无法写入用户数据目录',
+      solution: '请以管理员权限运行，或更改安装位置'
+    });
+  }
+
+  return issues;
+}
+
+app.whenReady().then(async () => {
+  // 执行系统要求检查
+  const issues = await checkSystemRequirements();
+
+  // 处理严重错误
+  const errors = issues.filter(i => i.severity === 'error');
+  if (errors.length > 0) {
+    dialog.showErrorBox(
+      '系统要求检查失败',
+      '应用无法启动，请解决以下问题:\n\n' +
+      errors.map(i => `• ${i.message}\n  解决方案: ${i.solution}`).join('\n\n')
+    );
+    app.quit();
+    return;
+  }
+
+  // 显示警告
+  const warnings = issues.filter(i => i.severity === 'warning');
+  if (warnings.length > 0) {
+    dialog.showMessageBox({
+      type: 'warning',
+      title: '系统检查警告',
+      message: '检测到以下问题，应用可能无法正常工作:',
+      detail: warnings.map(i => `• ${i.message}\n  建议: ${i.solution}`).join('\n\n'),
+      buttons: ['继续使用', '退出'],
+      defaultId: 0,
+      cancelId: 1
+    }).then(result => {
+      if (result.response === 1) {
+        app.quit();
+        return;
+      }
+      createWindow();
+    });
+  } else {
+    createWindow();
+  }
+
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
